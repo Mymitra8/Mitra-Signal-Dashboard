@@ -3,5 +3,620 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitra Signal - Trading Dashboard</title>
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiTWl0cmEgU2lnbmFsIiwic2hvcnRfbmFtZSI6Ik1pdHJhIiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB3aWR0aD0nMTkyJyBoZWlnaHQ9JzE5Micgdmlld0JveD0nMCAwIDI0IDI0JyBmaWxsPSclMjNmZmZmZmYnJTNFJTNDcGF0aCBkPSdNMTIgMmw4IDMuNzM4djcuNTI0bC04IDMuNzM4LTgtMy43MzhWNS43MzhMMTIgMnonJTNFJTNDL3BhdGglM0UlM0Mvc3ZnJTNFIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55In1dLCJzdGF
+    <title>Mitra Signal Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .status {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .status-running {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-stopped {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .controls {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .input, .select {
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .connection-setup {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .connection-title {
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .connection-text {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d9ff;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊</div>
+            <div class="title">Mitra Signal</div>
+            <div class="subtitle">Trading Dashboard</div>
+        </div>
+
+        <div class="status">
+            <div class="status-indicator status-connecting" id="statusIndicator">
+                <div class="pulse" id="statusPulse" style="background: #856404;"></div>
+                <span id="statusText">Ready to Connect</span>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="todayAlerts">0</div>
+                    <div class="stat-label">Today's Alerts</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="activeStrategy">None</div>
+                    <div class="stat-label">Strategy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="alertLimit">5</div>
+                    <div class="stat-label">Daily Limit</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="connectionSetup" class="connection-setup">
+            <div class="connection-title">🚀 Setup Required</div>
+            <div class="connection-text">
+                First, you need to set up your Google Apps Script URL. After deploying the script, paste the Web App URL below.
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="form-group">
+                <label class="label">Google Apps Script URL</label>
+                <input type="url" class="input" id="gasUrlInput" 
+                       placeholder="https://script.google.com/macros/s/[ID]/exec">
+            </div>
+
+            <button class="btn btn-secondary" id="connectBtn">
+                <span>🔗</span> Connect & Test
+            </button>
+
+            <div class="form-group">
+                <label class="label">Trading Strategy</label>
+                <select class="select" id="strategySelect">
+                    <option value="Enhanced">Enhanced Multi-Strategy</option>
+                    <option value="Ganu">Ganu Strategy (Conservative)</option>
+                    <option value="Scalping">Quick Scalp (Aggressive)</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button class="btn btn-primary" id="startBtn" disabled>
+                    <span>🚀</span> Start
+                </button>
+                <button class="btn btn-danger" id="stopBtn" disabled>
+                    <span>⏹️</span> Stop
+                </button>
+            </div>
+
+            <button class="btn btn-secondary" id="manualScanBtn" disabled>
+                <span>🔍</span> Manual Scan
+            </button>
+
+            <button class="btn" id="viewSheetsBtn" disabled>
+                <span>📊</span> View Google Sheets
+            </button>
+        </div>
+
+        <div id="alertContainer"></div>
+    </div>
+
+    <script>
+        class MitraSimpleDashboard {
+            constructor() {
+                this.gasUrl = localStorage.getItem('mitraGasUrl') || '';
+                this.isConnected = false;
+                this.updateInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                if (this.gasUrl) {
+                    document.getElementById('gasUrlInput').value = this.gasUrl;
+                    this.testConnection();
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('connectBtn').addEventListener('click', () => this.connect());
+                document.getElementById('startBtn').addEventListener('click', () => this.startEngine());
+                document.getElementById('stopBtn').addEventListener('click', () => this.stopEngine());
+                document.getElementById('manualScanBtn').addEventListener('click', () => this.manualScan());
+                document.getElementById('viewSheetsBtn').addEventListener('click', () => this.viewSheets());
+            }
+
+            connect() {
+                const urlInput = document.getElementById('gasUrlInput');
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    this.showAlert('Please enter your Google Apps Script URL', 'error');
+                    return;
+                }
+
+                if (!url.includes('script.google.com')) {
+                    this.showAlert('Invalid URL. Make sure it\'s a Google Apps Script Web App URL', 'error');
+                    return;
+                }
+
+                this.gasUrl = url;
+                localStorage.setItem('mitraGasUrl', url);
+                this.testConnection();
+            }
+
+            async testConnection() {
+                if (!this.gasUrl) return;
+
+                const btn = document.getElementById('connectBtn');
+                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Connecting...</div>';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(this.gasUrl);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.isConnected = true;
+                        this.updateStatus(data.data);
+                        this.showAlert('✅ Connection successful!', 'success');
+                        document.getElementById('connectionSetup').style.display = 'none';
+                        this.enableControls();
+                        this.startPeriodicUpdate();
+                    } else {
+                        throw new Error(data.error || 'Connection failed');
+                    }
+                } catch (error) {
+                    this.isConnected = false;
+                    this.showAlert('❌ Connection failed: ' + error.message, 'error');
+                    this.updateStatusIndicator('stopped', 'Connection Failed');
+                } finally {
+                    btn.innerHTML = '<span>🔗</span> Connect & Test';
+                    btn.disabled = false;
+                }
+            }
+
+            enableControls() {
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('manualScanBtn').disabled = false;
+                document.getElementById('viewSheetsBtn').disabled = false;
+                document.getElementById('strategySelect').disabled = false;
+            }
+
+            async makeRequest(action, data = {}) {
+                if (!this.gasUrl) {
+                    this.showAlert('Please connect first', 'error');
+                    return null;
+                }
+
+                try {
+                    const response = await fetch(this.gasUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action, ...data })
+                    });
+
+                    return await response.json();
+                } catch (error) {
+                    this.showAlert('Request failed: ' + error.message, 'error');
+                    return null;
+                }
+            }
+
+            async startEngine() {
+                const strategy = document.getElementById('strategySelect').value;
+                const btn = document.getElementById('startBtn');
+                
+                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
+                btn.disabled = true;
+
+                const result = await this.makeRequest('start', { strategy });
+
+                if (result && result.success) {
+                    this.showAlert('🚀 Engine started successfully!', 'success');
+                    this.updateStatus();
+                } else {
+                    this.showAlert('❌ Failed to start engine', 'error');
+                }
+
+                btn.innerHTML = '<span>🚀</span> Start';
+                btn.disabled = false;
+            }
+
+            async stopEngine() {
+                const btn = document.getElementById('stopBtn');
+                
+                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
+                btn.disabled = true;
+
+                const result = await this.makeRequest('stop');
+
+                if (result && result.success) {
+                    this.showAlert('⏹️ Engine stopped successfully!', 'success');
+                    this.updateStatus();
+                } else {
+                    this.showAlert('❌ Failed to stop engine', 'error');
+                }
+
+                btn.innerHTML = '<span>⏹️</span> Stop';
+                btn.disabled = false;
+            }
+
+            async manualScan() {
+                const strategy = document.getElementById('strategySelect').value;
+                const btn = document.getElementById('manualScanBtn');
+                
+                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
+                btn.disabled = true;
+
+                const result = await this.makeRequest('manualScan', { strategy });
+
+                if (result && result.success) {
+                    this.showAlert('🔍 Manual scan completed!', 'success');
+                } else {
+                    this.showAlert('❌ Manual scan failed', 'error');
+                }
+
+                btn.innerHTML = '<span>🔍</span> Manual Scan';
+                btn.disabled = false;
+            }
+
+            viewSheets() {
+                window.open('https://docs.google.com/spreadsheets/d/1_LnY1tsOjftlbBzYpWIew3dMgNhKxpoOsOWFE0Eg_Es/edit', '_blank');
+            }
+
+            async updateStatus() {
+                if (!this.isConnected) return;
+
+                try {
+                    const response = await fetch(this.gasUrl);
+                    const data = await response.json();
+
+                    if (data.success && data.data) {
+                        this.updateStatusDisplay(data.data);
+                    }
+                } catch (error) {
+                    console.error('Status update failed:', error);
+                }
+            }
+
+            updateStatusDisplay(status) {
+                // Update status indicator
+                this.updateStatusIndicator(
+                    status.isRunning ? 'running' : 'stopped',
+                    status.isRunning ? 'Engine Running' : 'Engine Stopped'
+                );
+
+                // Update stats
+                document.getElementById('activeStrategy').textContent = status.activeStrategy || 'None';
+                document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
+                document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
+
+                // Update controls
+                if (status.isRunning) {
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('strategySelect').disabled = true;
+                } else {
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('strategySelect').disabled = false;
+                }
+            }
+
+            updateStatusIndicator(status, text) {
+                const indicator = document.getElementById('statusIndicator');
+                const pulse = document.getElementById('statusPulse');
+                const statusText = document.getElementById('statusText');
+
+                indicator.className = `status-indicator status-${status}`;
+                
+                if (status === 'running') {
+                    pulse.style.background = '#10b981';
+                } else if (status === 'stopped') {
+                    pulse.style.background = '#ef4444';
+                } else {
+                    pulse.style.background = '#f59e0b';
+                }
+
+                statusText.textContent = text;
+            }
+
+            showAlert(message, type = 'info') {
+                const alertContainer = document.getElementById('alertContainer');
+                
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type}`;
+                alert.textContent = message;
+                
+                alertContainer.appendChild(alert);
+                
+                setTimeout(() => {
+                    alertContainer.removeChild(alert);
+                }, 5000);
+            }
+
+            startPeriodicUpdate() {
+                if (this.updateInterval) return;
+                
+                this.updateInterval = setInterval(() => {
+                    this.updateStatus();
+                }, 30000);
+            }
+
+            destroy() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                }
+            }
+        }
+
+        // Initialize dashboard
+        let dashboard;
+        document.addEventListener('DOMContentLoaded', () => {
+            dashboard = new MitraSimpleDashboard();
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (dashboard) dashboard.destroy();
+        });
+    </script>
+</body>
+</html>
