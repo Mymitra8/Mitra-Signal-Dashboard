@@ -3,8 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitra Signal Dashboard</title>
+    <title>Mitra Signal - Trading Dashboard</title>
+    <meta name="theme-color" content="#1a1b23">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4aa'%3E%3Cpath d='M12 2l8 3.738v7.524l-8 3.738-8-3.738V5.738L12 2z'/%3E%3C/svg%3E">
+    
     <style>
+        :root {
+            --bg-primary: #0a0b0f;
+            --bg-secondary: #1a1b23;
+            --bg-card: #252730;
+            --bg-hover: #2a2d3a;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a8b7;
+            --text-muted: #6b7280;
+            --accent-primary: #00d4aa;
+            --accent-secondary: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: #374151;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-error: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,92 +38,279 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
             min-height: 100vh;
-            padding: 20px;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-height: 100vh;
         }
 
+        /* Header */
         .header {
-            text-align: center;
-            margin-bottom: 30px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .logo {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            color: #666;
-            font-size: 16px;
-        }
-
-        .status {
-            background: #f8f9fa;
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .status-indicator {
-            display: inline-flex;
+            display: flex;
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
         .status-running {
-            background: #d4edda;
-            color: #155724;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .status-stopped {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status-connecting {
-            background: #fff3cd;
-            color: #856404;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .pulse {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
 
-        .controls {
+        /* Setup Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .modal-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+            border-color: var(--accent-primary);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-description {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .control-header {
+            margin-bottom: 32px;
+        }
+
+        .control-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .control-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .control-section {
+            display: flex;
+            flex-direction: column;
             gap: 20px;
-            margin-bottom: 30px;
         }
 
         .form-group {
@@ -106,68 +319,93 @@
             gap: 8px;
         }
 
-        .label {
-            font-weight: 600;
-            color: #333;
+        .form-label {
             font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
-        .input, .select {
-            padding: 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
+        .form-select {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-primary);
             font-size: 16px;
-            background: white;
+            transition: all 0.3s ease;
         }
 
-        .input:focus, .select:focus {
+        .form-select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
         }
 
         .btn {
-            padding: 15px 20px;
-            border: none;
-            border-radius: 10px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            color: var(--text-primary);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: var(--gradient-success);
+            border-color: var(--success);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: var(--gradient-error);
+            border-color: var(--error);
             color: white;
         }
 
         .btn-danger:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-primary);
+            border-color: var(--accent-secondary);
             color: white;
         }
 
         .btn-secondary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
         }
 
         .btn:disabled {
@@ -177,53 +415,7 @@
             box-shadow: none !important;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .connection-setup {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .connection-title {
-            font-weight: bold;
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .connection-text {
-            font-size: 14px;
-            color: #333;
-            line-height: 1.5;
-        }
-
+        /* Loading States */
         .loading {
             display: inline-flex;
             align-items: center;
@@ -243,379 +435,542 @@
             to { transform: rotate(360deg); }
         }
 
-        .alert {
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
+        .empty-state {
+            text-align: center;
+            padding: 64px 32px;
+            color: var(--text-muted);
         }
 
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
 
-        .alert-info {
-            background: #cce7ff;
-            color: #004085;
-            border: 1px solid #b3d9ff;
+            .header {
+                padding: 20px;
+                border-radius: 16px;
+                top: 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .control-panel {
+                padding: 24px;
+                border-radius: 16px;
+            }
+
+            .control-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .modal-content {
+                padding: 24px;
+                margin: 20px;
+            }
         }
 
         @media (max-width: 480px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
+            .logo-text {
+                font-size: 20px;
             }
-            
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .control-title {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Setup Modal -->
+    <div class="modal" id="setupModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🚀 Welcome to Mitra Signal</h2>
+            <p class="modal-description">
+                To get started, please enter your Google Apps Script Web App URL. 
+                This connects your dashboard to the trading bot backend.
+            </p>
+            <input type="url" 
+                   class="form-input" 
+                   id="gasUrlInput" 
+                   placeholder="https://script.google.com/macros/s/AKfycbyQH44mIHTuI2IDAi0gmvpQHlnk1h47EV7xE8WK1TVRF0SnuapxL0TPrwjIIThMWhPg/exec"
+                   value="">
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="btn btn-primary" onclick="saveGasUrl()" style="flex: 1;">
+                    Connect
+                </button>
+                <button class="btn" onclick="showHelp()" style="flex: 1;">
+                    Help
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <div class="logo">📊</div>
-            <div class="title">Mitra Signal</div>
-            <div class="subtitle">Trading Dashboard</div>
-        </div>
-
-        <div class="status">
-            <div class="status-indicator status-connecting" id="statusIndicator">
-                <div class="pulse" id="statusPulse" style="background: #856404;"></div>
-                <span id="statusText">Ready to Connect</span>
-            </div>
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-value" id="todayAlerts">0</div>
-                    <div class="stat-label">Today's Alerts</div>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">M</div>
+                    <div class="logo-text">Mitra Signal</div>
                 </div>
-                <div class="stat">
-                    <div class="stat-value" id="activeStrategy">None</div>
-                    <div class="stat-label">Strategy</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="alertLimit">5</div>
-                    <div class="stat-label">Daily Limit</div>
+                <div class="status-indicator" id="statusIndicator">
+                    <div class="pulse" id="statusPulse"></div>
+                    <span id="statusText">Connecting...</span>
                 </div>
             </div>
-        </div>
+        </header>
 
-        <div id="connectionSetup" class="connection-setup">
-            <div class="connection-title">🚀 Setup Required</div>
-            <div class="connection-text">
-                First, you need to set up your Google Apps Script URL. After deploying the script, paste the Web App URL below.
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Active Strategy</span>
+                    <div class="stat-icon" style="background: var(--gradient-primary);">📈</div>
+                </div>
+                <div class="stat-value" id="activeStrategy">Enhanced</div>
+                <div class="stat-description">Current trading strategy</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Today's Alerts</span>
+                    <div class="stat-icon" style="background: var(--gradient-success);">🚨</div>
+                </div>
+                <div class="stat-value" id="todayAlerts">0</div>
+                <div class="stat-description">Signals sent today</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Alert Limit</span>
+                    <div class="stat-icon" style="background: var(--gradient-warning);">⚡</div>
+                </div>
+                <div class="stat-value" id="alertLimit">5</div>
+                <div class="stat-description">Daily maximum alerts</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Last Update</span>
+                    <div class="stat-icon" style="background: var(--gradient-primary);">🕒</div>
+                </div>
+                <div class="stat-value" id="lastUpdate" style="font-size: 18px;">Never</div>
+                <div class="stat-description">Engine last activity</div>
             </div>
         </div>
 
-        <div class="controls">
-            <div class="form-group">
-                <label class="label">Google Apps Script URL</label>
-                <input type="url" class="input" id="gasUrlInput" 
-                       placeholder="https://script.google.com/macros/s/[ID]/exec">
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-header">
+                <h2 class="control-title">Engine Control</h2>
+                <p class="control-subtitle">Manage your trading bot and strategy settings</p>
             </div>
+            <div class="control-grid">
+                <div class="control-section">
+                    <div class="form-group">
+                        <label class="form-label">Trading Strategy</label>
+                        <select class="form-select" id="strategySelect">
+                            <option value="Enhanced">Enhanced Multi-Strategy</option>
+                            <option value="Ganu">Ganu Strategy (Conservative)</option>
+                            <option value="Scalping">Quick Scalp (Aggressive)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="startBtn">
+                        <span>🚀</span> Start Engine
+                    </button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>
+                        <span>⏹️</span> Stop Engine
+                    </button>
+                </div>
 
-            <button class="btn btn-secondary" id="connectBtn">
-                <span>🔗</span> Connect & Test
-            </button>
-
-            <div class="form-group">
-                <label class="label">Trading Strategy</label>
-                <select class="select" id="strategySelect">
-                    <option value="Enhanced">Enhanced Multi-Strategy</option>
-                    <option value="Ganu">Ganu Strategy (Conservative)</option>
-                    <option value="Scalping">Quick Scalp (Aggressive)</option>
-                </select>
+                <div class="control-section">
+                    <button class="btn btn-secondary" id="manualScanBtn">
+                        <span>🔍</span> Run Manual Scan
+                    </button>
+                    <button class="btn" id="testConnectionBtn">
+                        <span>🧪</span> Test Connection
+                    </button>
+                    <a href="https://docs.google.com/spreadsheets/d/1_LnY1tsOjftlbBzYpWIew3dMgNhKxpoOsOWFE0Eg_Es/edit" 
+                       target="_blank" class="btn">
+                        <span>📊</span> View Sheets
+                    </a>
+                    <button class="btn" onclick="resetConnection()">
+                        <span>⚙️</span> Change URL
+                    </button>
+                </div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <button class="btn btn-primary" id="startBtn" disabled>
-                    <span>🚀</span> Start
-                </button>
-                <button class="btn btn-danger" id="stopBtn" disabled>
-                    <span>⏹️</span> Stop
-                </button>
-            </div>
-
-            <button class="btn btn-secondary" id="manualScanBtn" disabled>
-                <span>🔍</span> Manual Scan
-            </button>
-
-            <button class="btn" id="viewSheetsBtn" disabled>
-                <span>📊</span> View Google Sheets
-            </button>
         </div>
 
-        <div id="alertContainer"></div>
+        <!-- Recent Activity -->
+        <div class="control-panel">
+            <div class="control-header">
+                <h2 class="control-title">System Status</h2>
+                <p class="control-subtitle">Monitor your trading bot performance</p>
+            </div>
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <p>Dashboard ready! Connect to your Google Apps Script to start monitoring signals.</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        class MitraSimpleDashboard {
-            constructor() {
-                this.gasUrl = localStorage.getItem('mitraGasUrl') || '';
-                this.isConnected = false;
-                this.updateInterval = null;
-                this.init();
+        let gasUrl = '';
+
+        // Show setup modal on first load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUrl = localStorage.getItem('mitraGasUrl');
+            if (savedUrl) {
+                gasUrl = savedUrl;
+                document.getElementById('setupModal').style.display = 'none';
+                initializeDashboard();
+            } else {
+                document.getElementById('setupModal').style.display = 'flex';
+            }
+        });
+
+        function saveGasUrl() {
+            const input = document.getElementById('gasUrlInput');
+            const url = input.value.trim();
+            
+            if (!url) {
+                showNotification('Please enter a valid URL', 'error');
+                return;
             }
 
-            init() {
-                this.setupEventListeners();
-                if (this.gasUrl) {
-                    document.getElementById('gasUrlInput').value = this.gasUrl;
-                    this.testConnection();
-                }
+            if (!url.includes('script.google.com')) {
+                showNotification('Please enter a valid Google Apps Script URL', 'error');
+                return;
             }
 
-            setupEventListeners() {
-                document.getElementById('connectBtn').addEventListener('click', () => this.connect());
-                document.getElementById('startBtn').addEventListener('click', () => this.startEngine());
-                document.getElementById('stopBtn').addEventListener('click', () => this.stopEngine());
-                document.getElementById('manualScanBtn').addEventListener('click', () => this.manualScan());
-                document.getElementById('viewSheetsBtn').addEventListener('click', () => this.viewSheets());
+            gasUrl = url;
+            localStorage.setItem('mitraGasUrl', url);
+            document.getElementById('setupModal').style.display = 'none';
+            
+            showNotification('Connection saved! Testing...', 'success');
+            initializeDashboard();
+        }
+
+        function showHelp() {
+            const helpText = `To get your Google Apps Script URL:
+
+1. Go to script.google.com
+2. Create a new project
+3. Paste the Google Apps Script code
+4. Deploy → New Deployment → Web App
+5. Set access to "Anyone"
+6. Copy the URL and paste it here
+
+Need more help? Check the deployment guide!`;
+
+            alert(helpText);
+        }
+
+        function resetConnection() {
+            localStorage.removeItem('mitraGasUrl');
+            gasUrl = '';
+            document.getElementById('gasUrlInput').value = '';
+            document.getElementById('setupModal').style.display = 'flex';
+        }
+
+        function initializeDashboard() {
+            updateStatusIndicator('stopped', 'Connecting...');
+            testConnection();
+            setupEventListeners();
+            startPeriodicUpdate();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('startBtn').addEventListener('click', startEngine);
+            document.getElementById('stopBtn').addEventListener('click', stopEngine);
+            document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
+            document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+        }
+
+        async function makeRequest(action, data = {}) {
+            if (!gasUrl) {
+                showNotification('No connection URL configured', 'error');
+                return null;
             }
 
-            connect() {
-                const urlInput = document.getElementById('gasUrlInput');
-                const url = urlInput.value.trim();
-                
-                if (!url) {
-                    this.showAlert('Please enter your Google Apps Script URL', 'error');
-                    return;
-                }
+            try {
+                const payload = { action, ...data };
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    mode: 'cors'
+                });
 
-                if (!url.includes('script.google.com')) {
-                    this.showAlert('Invalid URL. Make sure it\'s a Google Apps Script Web App URL', 'error');
-                    return;
-                }
-
-                this.gasUrl = url;
-                localStorage.setItem('mitraGasUrl', url);
-                this.testConnection();
-            }
-
-            async testConnection() {
-                if (!this.gasUrl) return;
-
-                const btn = document.getElementById('connectBtn');
-                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Connecting...</div>';
-                btn.disabled = true;
-
-                try {
-                    const response = await fetch(this.gasUrl);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        this.isConnected = true;
-                        this.updateStatus(data.data);
-                        this.showAlert('✅ Connection successful!', 'success');
-                        document.getElementById('connectionSetup').style.display = 'none';
-                        this.enableControls();
-                        this.startPeriodicUpdate();
-                    } else {
-                        throw new Error(data.error || 'Connection failed');
-                    }
-                } catch (error) {
-                    this.isConnected = false;
-                    this.showAlert('❌ Connection failed: ' + error.message, 'error');
-                    this.updateStatusIndicator('stopped', 'Connection Failed');
-                } finally {
-                    btn.innerHTML = '<span>🔗</span> Connect & Test';
-                    btn.disabled = false;
-                }
-            }
-
-            enableControls() {
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('manualScanBtn').disabled = false;
-                document.getElementById('viewSheetsBtn').disabled = false;
-                document.getElementById('strategySelect').disabled = false;
-            }
-
-            async makeRequest(action, data = {}) {
-                if (!this.gasUrl) {
-                    this.showAlert('Please connect first', 'error');
-                    return null;
-                }
-
-                try {
-                    const response = await fetch(this.gasUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action, ...data })
-                    });
-
-                    return await response.json();
-                } catch (error) {
-                    this.showAlert('Request failed: ' + error.message, 'error');
-                    return null;
-                }
-            }
-
-            async startEngine() {
-                const strategy = document.getElementById('strategySelect').value;
-                const btn = document.getElementById('startBtn');
-                
-                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
-                btn.disabled = true;
-
-                const result = await this.makeRequest('start', { strategy });
-
-                if (result && result.success) {
-                    this.showAlert('🚀 Engine started successfully!', 'success');
-                    this.updateStatus();
-                } else {
-                    this.showAlert('❌ Failed to start engine', 'error');
-                }
-
-                btn.innerHTML = '<span>🚀</span> Start';
-                btn.disabled = false;
-            }
-
-            async stopEngine() {
-                const btn = document.getElementById('stopBtn');
-                
-                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
-                btn.disabled = true;
-
-                const result = await this.makeRequest('stop');
-
-                if (result && result.success) {
-                    this.showAlert('⏹️ Engine stopped successfully!', 'success');
-                    this.updateStatus();
-                } else {
-                    this.showAlert('❌ Failed to stop engine', 'error');
-                }
-
-                btn.innerHTML = '<span>⏹️</span> Stop';
-                btn.disabled = false;
-            }
-
-            async manualScan() {
-                const strategy = document.getElementById('strategySelect').value;
-                const btn = document.getElementById('manualScanBtn');
-                
-                btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
-                btn.disabled = true;
-
-                const result = await this.makeRequest('manualScan', { strategy });
-
-                if (result && result.success) {
-                    this.showAlert('🔍 Manual scan completed!', 'success');
-                } else {
-                    this.showAlert('❌ Manual scan failed', 'error');
-                }
-
-                btn.innerHTML = '<span>🔍</span> Manual Scan';
-                btn.disabled = false;
-            }
-
-            viewSheets() {
-                window.open('https://docs.google.com/spreadsheets/d/1_LnY1tsOjftlbBzYpWIew3dMgNhKxpoOsOWFE0Eg_Es/edit', '_blank');
-            }
-
-            async updateStatus() {
-                if (!this.isConnected) return;
-
-                try {
-                    const response = await fetch(this.gasUrl);
-                    const data = await response.json();
-
-                    if (data.success && data.data) {
-                        this.updateStatusDisplay(data.data);
-                    }
-                } catch (error) {
-                    console.error('Status update failed:', error);
-                }
-            }
-
-            updateStatusDisplay(status) {
-                // Update status indicator
-                this.updateStatusIndicator(
-                    status.isRunning ? 'running' : 'stopped',
-                    status.isRunning ? 'Engine Running' : 'Engine Stopped'
-                );
-
-                // Update stats
-                document.getElementById('activeStrategy').textContent = status.activeStrategy || 'None';
-                document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
-                document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
-
-                // Update controls
-                if (status.isRunning) {
-                    document.getElementById('startBtn').disabled = true;
-                    document.getElementById('stopBtn').disabled = false;
-                    document.getElementById('strategySelect').disabled = true;
-                } else {
-                    document.getElementById('startBtn').disabled = false;
-                    document.getElementById('stopBtn').disabled = true;
-                    document.getElementById('strategySelect').disabled = false;
-                }
-            }
-
-            updateStatusIndicator(status, text) {
-                const indicator = document.getElementById('statusIndicator');
-                const pulse = document.getElementById('statusPulse');
-                const statusText = document.getElementById('statusText');
-
-                indicator.className = `status-indicator status-${status}`;
-                
-                if (status === 'running') {
-                    pulse.style.background = '#10b981';
-                } else if (status === 'stopped') {
-                    pulse.style.background = '#ef4444';
-                } else {
-                    pulse.style.background = '#f59e0b';
-                }
-
-                statusText.textContent = text;
-            }
-
-            showAlert(message, type = 'info') {
-                const alertContainer = document.getElementById('alertContainer');
-                
-                const alert = document.createElement('div');
-                alert.className = `alert alert-${type}`;
-                alert.textContent = message;
-                
-                alertContainer.appendChild(alert);
-                
-                setTimeout(() => {
-                    alertContainer.removeChild(alert);
-                }, 5000);
-            }
-
-            startPeriodicUpdate() {
-                if (this.updateInterval) return;
-                
-                this.updateInterval = setInterval(() => {
-                    this.updateStatus();
-                }, 30000);
-            }
-
-            destroy() {
-                if (this.updateInterval) {
-                    clearInterval(this.updateInterval);
-                }
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Request failed:', error);
+                updateStatusIndicator('stopped', 'Connection Error');
+                return null;
             }
         }
 
-        // Initialize dashboard
-        let dashboard;
-        document.addEventListener('DOMContentLoaded', () => {
-            dashboard = new MitraSimpleDashboard();
-        });
+        async function testConnection() {
+            const btn = document.getElementById('testConnectionBtn');
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Testing...</div>';
+            btn.disabled = true;
 
-        // Cleanup
-        window.addEventListener('beforeunload', () => {
-            if (dashboard) dashboard.destroy();
+            try {
+                const response = await fetch(gasUrl);
+                const result = await response.json();
+                
+                if (result.success || result.data) {
+                    updateStatusIndicator('stopped', 'Connected');
+                    showNotification('Connection successful!', 'success');
+                    if (result.data) {
+                        updateDashboard(result.data);
+                    }
+                } else {
+                    throw new Error('Invalid response');
+                }
+            } catch (error) {
+                updateStatusIndicator('stopped', 'Connection Failed');
+                showNotification('Connection failed. Check your URL.', 'error');
+            }
+
+            btn.innerHTML = '<span>🧪</span> Test Connection';
+            btn.disabled = false;
+        }
+
+        async function startEngine() {
+            const strategy = document.getElementById('strategySelect').value;
+            const btn = document.getElementById('startBtn');
+            
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
+            btn.disabled = true;
+
+            const result = await makeRequest('start', { strategy });
+            
+            if (result && result.success) {
+                showNotification('Engine started successfully!', 'success');
+                updateStatus();
+            } else {
+                showNotification('Failed to start engine', 'error');
+                btn.innerHTML = '<span>🚀</span> Start Engine';
+                btn.disabled = false;
+            }
+        }
+
+        async function stopEngine() {
+            const btn = document.getElementById('stopBtn');
+            
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
+            btn.disabled = true;
+
+            const result = await makeRequest('stop');
+            
+            if (result && result.success) {
+                showNotification('Engine stopped successfully!', 'success');
+                updateStatus();
+            } else {
+                showNotification('Failed to stop engine', 'error');
+                btn.innerHTML = '<span>⏹️</span> Stop Engine';
+                btn.disabled = false;
+            }
+        }
+
+        async function runManualScan() {
+            const strategy = document.getElementById('strategySelect').value;
+            const btn = document.getElementById('manualScanBtn');
+            
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
+            btn.disabled = true;
+
+            const result = await makeRequest('manualScan', { strategy });
+            
+            if (result && result.success) {
+                showNotification('Manual scan completed!', 'success');
+            } else {
+                showNotification('Manual scan failed', 'error');
+            }
+
+            btn.innerHTML = '<span>🔍</span> Run Manual Scan';
+            btn.disabled = false;
+        }
+
+        async function updateStatus() {
+            if (!gasUrl) return;
+
+            try {
+                const response = await fetch(gasUrl);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    updateDashboard(result.data);
+                }
+            } catch (error) {
+                console.error('Status update failed:', error);
+            }
+        }
+
+        function updateDashboard(status) {
+            // Update status indicator
+            updateStatusIndicator(
+                status.isRunning ? 'running' : 'stopped',
+                status.isRunning ? 'Running' : 'Connected'
+            );
+
+            // Update stats
+            document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
+            document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
+            document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
+            
+            // Update last update time
+            if (status.lastUpdate) {
+                const date = new Date(status.lastUpdate);
+                document.getElementById('lastUpdate').textContent = date.toLocaleTimeString();
+            }
+
+            // Update controls
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const strategySelect = document.getElementById('strategySelect');
+
+            if (status.isRunning) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<span>🚀</span> Engine Running';
+                stopBtn.disabled = false;
+                stopBtn.innerHTML = '<span>⏹️</span> Stop Engine';
+                strategySelect.disabled = true;
+            } else {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<span>🚀</span> Start Engine';
+                stopBtn.disabled = true;
+                stopBtn.innerHTML = '<span>⏹️</span> Stopped';
+                strategySelect.disabled = false;
+            }
+
+            strategySelect.value = status.activeStrategy || 'Enhanced';
+        }
+
+        function updateStatusIndicator(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const pulse = document.getElementById('statusPulse');
+            const statusText = document.getElementById('statusText');
+
+            indicator.className = `status-indicator status-${status}`;
+            pulse.style.backgroundColor = status === 'running' ? 'var(--success)' : 'var(--error)';
+            statusText.textContent = text;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                padding: 16px 24px;
+                border-radius: 12px;
+                color: white;
+                font-weight: 600;
+                max-width: 300px;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                background: ${type === 'success' ? 'var(--gradient-success)' : 
+                           type === 'error' ? 'var(--gradient-error)' : 'var(--gradient-primary)'};
+                box-shadow: var(--shadow);
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        function startPeriodicUpdate() {
+            setInterval(() => {
+                if (gasUrl) {
+                    updateStatus();
+                }
+            }, 30000); // Update every 30 seconds
+        }
+
+        // PWA Installation prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            const installButton = document.createElement('button');
+            installButton.className = 'btn btn-secondary';
+            installButton.innerHTML = '<span>📱</span> Install App';
+            installButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1000;
+                box-shadow: var(--shadow);
+            `;
+            
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    document.body.removeChild(installButton);
+                    
+                    if (outcome === 'accepted') {
+                        showNotification('App installed successfully!', 'success');
+                    }
+                }
+            });
+            
+            document.body.appendChild(installButton);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (document.body.contains(installButton)) {
+                    installButton.style.opacity = '0';
+                    setTimeout(() => {
+                        if (document.body.contains(installButton)) {
+                            document.body.removeChild(installButton);
+                        }
+                    }, 300);
+                }
+            }, 10000);
         });
     </script>
 </body>
