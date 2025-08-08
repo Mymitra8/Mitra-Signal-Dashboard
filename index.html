@@ -2,756 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitra Signal - Trading Dashboard</title>
-    <meta name="theme-color" content="#1a1b23">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4aa'%3E%3Cpath d='M12 2l8 3.738v7.524l-8 3.738-8-3.738V5.738L12 2z'/%3E%3C/svg%3E">
-    
+    <title>Crypto Dashboard – Mitra Patched</title>
     <style>
-        :root {
-            --bg-primary: #0a0b0f;
-            --bg-secondary: #1a1b23;
-            --bg-card: #252730;
-            --bg-hover: #2a2d3a;
-            --text-primary: #ffffff;
-            --text-secondary: #a1a8b7;
-            --text-muted: #6b7280;
-            --accent-primary: #00d4aa;
-            --accent-secondary: #0ea5e9;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --border: #374151;
-            --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            --gradient-error: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
-            position: sticky;
-            top: 20px;
-            z-index: 100;
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow);
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--gradient-primary);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
-        }
-
-        .logo-text {
-            font-size: 24px;
-            font-weight: 700;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .status-running {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .status-stopped {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .status-connecting {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-
-        /* Setup Modal */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 500px;
-            width: 100%;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .modal-description {
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        .form-input {
-            width: 100%;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            margin-bottom: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
-        }
-
-        .form-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow);
-            border-color: var(--accent-primary);
-        }
-
-        .stat-card:hover::before {
-            opacity: 1;
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .stat-title {
-            font-size: 14px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .stat-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-description {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Control Panel */
-        .control-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 32px;
-            margin-bottom: 32px;
-        }
-
-        .control-header {
-            margin-bottom: 32px;
-        }
-
-        .control-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .control-subtitle {
-            color: var(--text-secondary);
-            font-size: 16px;
-        }
-
-        .control-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
-        }
-
-        .control-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-        }
-
-        .form-select {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: var(--text-primary);
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .form-select:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
-        }
-
-        .btn {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 16px 24px;
-            color: var(--text-primary);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
-        .btn-primary {
-            background: var(--gradient-success);
-            border-color: var(--success);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-danger {
-            background: var(--gradient-error);
-            border-color: var(--error);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
-        }
-
-        .btn-secondary {
-            background: var(--gradient-primary);
-            border-color: var(--accent-secondary);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Loading States */
-        .loading {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid transparent;
-            border-top: 2px solid currentColor;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 64px 32px;
-            color: var(--text-muted);
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .debug-info {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: var(--text-muted);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        /* Mobile Optimizations */
-        @media (max-width: 768px) {
-            .container {
-                padding: 16px;
-            }
-
-            .header {
-                padding: 20px;
-                border-radius: 16px;
-                top: 16px;
-            }
-
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-
-            .stat-card {
-                padding: 20px;
-            }
-
-            .control-panel {
-                padding: 24px;
-                border-radius: 16px;
-            }
-
-            .control-grid {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-
-            .modal-content {
-                padding: 24px;
-                margin: 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .logo-text {
-                font-size: 20px;
-            }
-
-            .stat-value {
-                font-size: 24px;
-            }
-
-            .control-title {
-                font-size: 20px;
-            }
-        }
+        body { font-family: Arial, sans-serif; background: #111; color: #eee; }
+        h1 { color: #0ff; }
+        .status-indicator { padding: 5px 10px; border-radius: 4px; display: inline-block; }
+        .status-running { background: #0a0; }
+        .status-stopped { background: #a00; }
+        .notification { margin-top: 10px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+        th, td { border: 1px solid #444; padding: 6px; text-align: left; }
+        th { background: #222; }
     </style>
 </head>
 <body>
-    <!-- Setup Modal -->
-    <div class="modal" id="setupModal">
-        <div class="modal-content">
-            <h2 class="modal-title">🚀 Welcome to Mitra Signal</h2>
-            <p class="modal-description">
-                To get started, please enter your Google Apps Script Web App URL. 
-                This connects your dashboard to the trading bot backend.
-            </p>
-            <input type="url" 
-                   class="form-input" 
-                   id="gasUrlInput" 
-                   placeholder="https://script.google.com/macros/s/your-script-id/exec"
-                   value="">
-            <div style="display: flex; gap: 12px; margin-top: 16px;">
-                <button class="btn btn-primary" onclick="saveGasUrl()" style="flex: 1;">
-                    Connect
-                </button>
-                <button class="btn" onclick="showHelp()" style="flex: 1;">
-                    Help
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <div class="logo-icon">M</div>
-                    <div class="logo-text">Mitra Signal</div>
-                </div>
-                <div class="status-indicator" id="statusIndicator">
-                    <div class="pulse" id="statusPulse"></div>
-                    <span id="statusText">Connecting...</span>
-                </div>
-            </div>
-        </header>
+<h1>Crypto Dashboard</h1>
+<div>
+    Status: <span id="status" class="status-indicator status-stopped">Stopped</span>
+</div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Active Strategy</span>
-                    <div class="stat-icon" style="background: var(--gradient-primary);">📈</div>
-                </div>
-                <div class="stat-value" id="activeStrategy">Enhanced</div>
-                <div class="stat-description">Current trading strategy</div>
-            </div>
+<div style="margin-top:10px;">
+    <button onclick="changeUrl()">Change URL</button>
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="startEngine()">Start Engine</button>
+    <button onclick="stopEngine()">Stop Engine</button>
+    <button onclick="runManualScan()">Manual Scan</button>
+</div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Today's Alerts</span>
-                    <div class="stat-icon" style="background: var(--gradient-success);">🚨</div>
-                </div>
-                <div class="stat-value" id="todayAlerts">0</div>
-                <div class="stat-description">Signals sent today</div>
-            </div>
+<div id="notification" class="notification"></div>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Alert Limit</span>
-                    <div class="stat-icon" style="background: var(--gradient-warning);">⚡</div>
-                </div>
-                <div class="stat-value" id="alertLimit">5</div>
-                <div class="stat-description">Daily maximum alerts</div>
-            </div>
+<table id="coinsTable">
+    <thead>
+        <tr>
+            <th>Coin</th>
+            <th>Price (USD)</th>
+            <th>24h Change %</th>
+            <th>RSI Est</th>
+            <th>Momentum Score</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
 
-            <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">Last Update</span>
-                    <div class="stat-icon" style="background: var(--gradient-primary);">🕒</div>
-                </div>
-                <div class="stat-value" id="lastUpdate" style="font-size: 18px;">Never</div>
-                <div class="stat-description">Engine last activity</div>
-            </div>
-        </div>
+<script>
+let gasUrl = localStorage.getItem('gasUrl') || '';
 
-        <!-- Control Panel -->
-        <div class="control-panel">
-            <div class="control-header">
-                <h2 class="control-title">Engine Control</h2>
-                <p class="control-subtitle">Manage your trading bot and strategy settings</p>
-            </div>
-            <div class="control-grid">
-                <div class="control-section">
-                    <div class="form-group">
-                        <label class="form-label">Trading Strategy</label>
-                        <select class="form-select" id="strategySelect">
-                            <option value="Enhanced">Enhanced Multi-Strategy</option>
-                            <option value="Ganu">Ganu Strategy (Conservative)</option>
-                            <option value="Scalping">Quick Scalp (Aggressive)</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" id="startBtn">
-                        <span>🚀</span> Start Engine
-                    </button>
-                    <button class="btn btn-danger" id="stopBtn" disabled>
-                        <span>⏹️</span> Stop Engine
-                    </button>
-                </div>
+function logDebug(...args) {
+    console.log('[DEBUG]', ...args);
+}
 
-                <div class="control-section">
-                    <button class="btn btn-secondary" id="manualScanBtn">
-                        <span>🔍</span> Run Manual Scan
-                    </button>
-                    <button class="btn" id="testConnectionBtn">
-                        <span>🧪</span> Test Connection
-                    </button>
-                    <a href="https://docs.google.com/spreadsheets/d/1_LnY1tsOjftlbBzYpWIew3dMgNhKxpoOsOWFE0Eg_Es/edit" 
-                       target="_blank" class="btn">
-                        <span>📊</span> View Sheets
-                    </a>
-                    <button class="btn" onclick="resetConnection()">
-                        <span>⚙️</span> Change URL
-                    </button>
-                </div>
-            </div>
-        </div>
+function showNotification(msg, type='info') {
+    const el = document.getElementById('notification');
+    el.textContent = msg;
+    el.style.color = type === 'error' ? 'red' : (type === 'success' ? 'lime' : '#eee');
+}
 
-        <!-- System Status -->
-        <div class="control-panel">
-            <div class="control-header">
-                <h2 class="control-title">System Status</h2>
-                <p class="control-subtitle">Monitor your trading bot performance and logs</p>
-            </div>
-            <div class="empty-state" id="systemStatus">
-                <div class="empty-icon">📊</div>
-                <p>Dashboard ready! Connect to your Google Apps Script to start monitoring signals.</p>
-            </div>
-            <div class="debug-info" id="debugInfo" style="display: none;">
-                <strong>Debug Information:</strong><br>
-                <span id="debugContent">No debug data available</span>
-            </div>
-        </div>
-    </div>
+function updateStatusIndicator(status, text) {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.className = 'status-indicator ' + (status === 'running' ? 'status-running' : 'status-stopped');
+}
 
-    <script>
-        let gasUrl = '';
-        let debugMode = false;
-
-        // Show setup modal on first load
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedUrl = window.localStorage?.getItem('mitraGasUrl');
-            if (savedUrl) {
-                gasUrl = savedUrl;
-                document.getElementById('setupModal').style.display = 'none';
-                initializeDashboard();
-            } else {
-                document.getElementById('setupModal').style.display = 'flex';
-            }
-        });
-
-        function saveGasUrl() {
-            const input = document.getElementById('gasUrlInput');
-            const url = input.value.trim();
-            
-            if (!url) {
-                showNotification('Please enter a valid URL', 'error');
-                return;
-            }
-
-            if (!url.includes('script.google.com')) {
-                showNotification('Please enter a valid Google Apps Script URL', 'error');
-                return;
-            }
-
-            gasUrl = url;
-            if (window.localStorage) {
-                window.localStorage.setItem('mitraGasUrl', url);
-            }
-            document.getElementById('setupModal').style.display = 'none';
-            
-            showNotification('Connection saved! Testing...', 'success');
-            initializeDashboard();
-        }
-
-        function showHelp() {
-            const helpText = `To get your Google Apps Script URL:
-
-1. Go to script.google.com
-2. Create a new project
-3. Paste the Google Apps Script code
-4. Deploy → New Deployment → Web App
-5. Set access to "Anyone"
-6. Copy the URL and paste it here
-
-Need more help? Check the deployment guide!`;
-
-            alert(helpText);
-        }
-
-        function resetConnection() {
-            if (window.localStorage) {
-                window.localStorage.removeItem('mitraGasUrl');
-            }
-            gasUrl = '';
-            document.getElementById('gasUrlInput').value = '';
-            document.getElementById('setupModal').style.display = 'flex';
-        }
-
-        function initializeDashboard() {
-            updateStatusIndicator('connecting', 'Connecting...');
-            testConnection();
-            setupEventListeners();
-            startPeriodicUpdate();
-        }
-
-        function setupEventListeners() {
-            document.getElementById('startBtn').addEventListener('click', startEngine);
-            document.getElementById('stopBtn').addEventListener('click', stopEngine);
-            document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
-            document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
-            
-            // Enable debug mode with triple click on logo
-            let logoClickCount = 0;
-            document.querySelector('.logo').addEventListener('click', () => {
-                logoClickCount++;
-                setTimeout(() => logoClickCount = 0, 1000);
-                if (logoClickCount === 3) {
-                    debugMode = !debugMode;
-                    document.getElementById('debugInfo').style.display = debugMode ? 'block' : 'none';
-                    showNotification(debugMode ? 'Debug mode enabled' : 'Debug mode disabled', 'info');
-                }
-            });
-        }
-
-        async function makeRequest(action, data = {}) {
+// ----------- Patched makeRequest -----------
+async function makeRequest(action, data = {}) {
     if (!gasUrl) {
         showNotification('No connection URL configured', 'error');
         return null;
@@ -761,357 +75,120 @@ Need more help? Check the deployment guide!`;
     logDebug('Making request:', requestData);
 
     try {
-        // Use urlencoded form to avoid CORS preflight (no custom headers)
         const form = new URLSearchParams();
         form.append('payload', JSON.stringify(requestData));
 
         const response = await fetch(gasUrl, {
             method: 'POST',
-            // Important: default headers for form-encoded body - no custom headers added
             body: form.toString(),
             mode: 'cors'
         });
 
         logDebug('Response status:', response.status);
-
-        const responseText = await response.text();
-        logDebug('Response text:', responseText);
+        const text = await response.text();
+        logDebug('Response text:', text);
 
         let result;
         try {
-            result = JSON.parse(responseText);
-        } catch (parseError) {
-            logDebug('JSON parse error:', parseError);
-            throw new Error('Invalid JSON response: ' + responseText);
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            throw new Error('Invalid JSON: ' + text);
         }
 
-        logDebug('Parsed result:', result);
         return result;
 
     } catch (error) {
         logDebug('Request failed:', error);
         updateStatusIndicator('stopped', 'Connection Error');
         return null;
-	    }
-	}
+    }
+}
 
+// ----------- Dashboard actions -----------
+async function testConnection() {
+    const res = await makeRequest('testApi');
+    if (res && res.success) {
+        showNotification(`Connection OK – Coins fetched: ${res.data.coinsFetched}`, 'success');
+    } else {
+        showNotification('Connection failed', 'error');
+    }
+}
 
-        async function testConnection() {
-            const btn = document.getElementById('testConnectionBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Testing...</div>';
-            btn.disabled = true;
+async function startEngine() {
+    const res = await makeRequest('start', { strategy: 'Enhanced' });
+    if (res && res.success) {
+        updateStatusIndicator('running', 'Running');
+        showNotification('Engine started', 'success');
+    }
+}
 
-            try {
-                updateStatusIndicator('connecting', 'Testing...');
-                
-                // Try GET request first
-                const response = await fetch(gasUrl);
-                const result = await response.json();
-                
-                logDebug('Test connection result:', result);
-                
-                if (result.success !== false) {
-                    updateStatusIndicator('stopped', 'Connected');
-                    showNotification('Connection successful!', 'success');
-                    if (result.data) {
-                        updateDashboard(result.data);
-                    }
-                } else {
-                    throw new Error(result.error || 'Invalid response');
-                }
-            } catch (error) {
-                logDebug('Connection test failed:', error);
-                updateStatusIndicator('stopped', 'Connection Failed');
-                showNotification('Connection failed: ' + error.message, 'error');
-            }
+async function stopEngine() {
+    const res = await makeRequest('stop');
+    if (res && res.success) {
+        updateStatusIndicator('stopped', 'Stopped');
+        showNotification('Engine stopped', 'success');
+    }
+}
 
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
+async function runManualScan() {
+    const res = await makeRequest('manualScan', { strategy: 'Enhanced' });
+    if (res && res.success) {
+        populateCoinsTable(res.data.coins);
+        showNotification('Manual scan complete', 'success');
+    }
+}
 
-        async function startEngine() {
-            const strategy = document.getElementById('strategySelect').value;
-            const btn = document.getElementById('startBtn');
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
-            btn.disabled = true;
+function populateCoinsTable(coins) {
+    const tbody = document.querySelector('#coinsTable tbody');
+    tbody.innerHTML = '';
+    (coins || []).forEach(coin => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${coin.name || ''}</td>
+            <td>${coin.current_price != null ? coin.current_price.toFixed(4) : ''}</td>
+            <td>${coin.price_change_percentage_24h != null ? coin.price_change_percentage_24h.toFixed(2) : ''}</td>
+            <td>${coin.rsi_estimate != null ? coin.rsi_estimate : ''}</td>
+            <td>${coin.momentum_score != null ? coin.momentum_score : ''}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
 
-            const result = await makeRequest('start', { strategy });
-            
-            if (result && result.success) {
-                showNotification('Engine started successfully!', 'success');
-                updateStatus();
-            } else {
-                const errorMsg = result?.error || 'Unknown error occurred';
-                showNotification('Failed to start engine: ' + errorMsg, 'error');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
+// ----------- Periodic update every 60s -----------
+async function updateDashboard() {
+    const res = await makeRequest('getStatus');
+    if (res && res.success) {
+        updateStatusIndicator(res.data.status === 'running' ? 'running' : 'stopped', res.data.status);
+    }
+    const coinsRes = await makeRequest('manualScan', { strategy: 'Enhanced' });
+    if (coinsRes && coinsRes.success) {
+        populateCoinsTable(coinsRes.data.coins);
+    }
+}
 
-        async function stopEngine() {
-            const btn = document.getElementById('stopBtn');
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
-            btn.disabled = true;
+function startPeriodicUpdate() {
+    updateDashboard(); // run immediately
+    setInterval(updateDashboard, 60000); // then every 60 sec
+}
 
-            const result = await makeRequest('stop');
-            
-            if (result && result.success) {
-                showNotification('Engine stopped successfully!', 'success');
-                updateStatus();
-            } else {
-                const errorMsg = result?.error || 'Unknown error occurred';
-                showNotification('Failed to stop engine: ' + errorMsg, 'error');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
+// ----------- URL change -----------
+function changeUrl() {
+    const newUrl = prompt('Enter new Apps Script Web App URL:', gasUrl);
+    if (newUrl) {
+        gasUrl = newUrl;
+        localStorage.setItem('gasUrl', gasUrl);
+        showNotification('URL updated', 'success');
+    }
+}
 
-        async function runManualScan() {
-            const strategy = document.getElementById('strategySelect').value;
-            const btn = document.getElementById('manualScanBtn');
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
-            btn.disabled = true;
+// ----------- Init on load -----------
+document.addEventListener('DOMContentLoaded', () => {
+    if (!gasUrl) {
+        changeUrl();
+    }
+    startPeriodicUpdate();
+});
+</script>
 
-            const result = await makeRequest('manualScan', { strategy });
-            
-            if (result && result.success) {
-                const scanData = result.data?.scanResult || {};
-                const message = `Scan completed: ${scanData.signalsFound || 0} signals found, ${scanData.alertsSent || 0} alerts sent`;
-                showNotification(message, 'success');
-                updateStatus();
-            } else {
-                const errorMsg = result?.error || 'Unknown error occurred';
-                showNotification('Manual scan failed: ' + errorMsg, 'error');
-            }
-
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-
-        async function updateStatus() {
-            if (!gasUrl) return;
-
-            try {
-                const response = await fetch(gasUrl);
-                const result = await response.json();
-                
-                logDebug('Status update result:', result);
-                
-                if (result.success !== false && result.data) {
-                    updateDashboard(result.data);
-                }
-            } catch (error) {
-                logDebug('Status update failed:', error);
-            }
-        }
-
-        function updateDashboard(status) {
-            logDebug('Updating dashboard with:', status);
-
-            // Update status indicator
-            updateStatusIndicator(
-                status.isRunning ? 'running' : 'stopped',
-                status.isRunning ? 'Running' : 'Connected'
-            );
-
-            // Update stats
-            document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
-            document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
-            document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
-            
-            // Update last update time
-            if (status.lastUpdate) {
-                const date = new Date(status.lastUpdate);
-                document.getElementById('lastUpdate').textContent = date.toLocaleTimeString();
-            }
-
-            // Update controls
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            const strategySelect = document.getElementById('strategySelect');
-
-            if (status.isRunning) {
-                startBtn.disabled = true;
-                startBtn.innerHTML = '<span>🚀</span> Engine Running';
-                stopBtn.disabled = false;
-                stopBtn.innerHTML = '<span>⏹️</span> Stop Engine';
-                strategySelect.disabled = true;
-            } else {
-                startBtn.disabled = false;
-                startBtn.innerHTML = '<span>🚀</span> Start Engine';
-                stopBtn.disabled = true;
-                stopBtn.innerHTML = '<span>⏹️</span> Stopped';
-                strategySelect.disabled = false;
-            }
-
-            strategySelect.value = status.activeStrategy || 'Enhanced';
-
-            // Update system status
-            const systemStatus = document.getElementById('systemStatus');
-            if (status.isRunning) {
-                systemStatus.innerHTML = `
-                    <div class="empty-icon">⚡</div>
-                    <p>Trading bot is actively running with <strong>${status.activeStrategy}</strong> strategy.</p>
-                    <p>Monitoring market for signals... Sent ${status.dailyAlerts}/${status.maxDailyAlerts} alerts today.</p>
-                `;
-            } else {
-                systemStatus.innerHTML = `
-                    <div class="empty-icon">📊</div>
-                    <p>Trading bot is ready but not running.</p>
-                    <p>Click "Start Engine" to begin monitoring market signals.</p>
-                `;
-            }
-        }
-
-        function updateStatusIndicator(status, text) {
-            const indicator = document.getElementById('statusIndicator');
-            const pulse = document.getElementById('statusPulse');
-            const statusText = document.getElementById('statusText');
-
-            indicator.className = `status-indicator status-${status}`;
-            
-            let color;
-            switch (status) {
-                case 'running':
-                    color = 'var(--success)';
-                    break;
-                case 'connecting':
-                    color = 'var(--warning)';
-                    break;
-                default:
-                    color = 'var(--error)';
-            }
-            
-            pulse.style.backgroundColor = color;
-            statusText.textContent = text;
-        }
-
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-                padding: 16px 24px;
-                border-radius: 12px;
-                color: white;
-                font-weight: 600;
-                max-width: 300px;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                background: ${type === 'success' ? 'var(--gradient-success)' : 
-                           type === 'error' ? 'var(--gradient-error)' : 'var(--gradient-primary)'};
-                box-shadow: var(--shadow);
-            `;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
-            
-            setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (document.body.contains(notification)) {
-                        document.body.removeChild(notification);
-                    }
-                }, 300);
-            }, 4000);
-        }
-
-        function startPeriodicUpdate() {
-            setInterval(() => {
-                if (gasUrl) {
-                    updateStatus();
-                }
-            }, 30000); // Update every 30 seconds
-        }
-
-        function logDebug(message, data = null) {
-            if (debugMode) {
-                const debugContent = document.getElementById('debugContent');
-                const timestamp = new Date().toLocaleTimeString();
-                const logEntry = `[${timestamp}] ${message}${data ? ': ' + JSON.stringify(data, null, 2) : ''}\n`;
-                debugContent.textContent = logEntry + debugContent.textContent;
-                
-                // Keep only last 20 entries
-                const lines = debugContent.textContent.split('\n');
-                if (lines.length > 20) {
-                    debugContent.textContent = lines.slice(0, 20).join('\n');
-                }
-            }
-            
-            console.log(message, data);
-        }
-
-        // PWA Installation prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            const installButton = document.createElement('button');
-            installButton.className = 'btn btn-secondary';
-            installButton.innerHTML = '<span>📱</span> Install App';
-            installButton.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 1000;
-                box-shadow: var(--shadow);
-            `;
-            
-            installButton.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    deferredPrompt = null;
-                    document.body.removeChild(installButton);
-                    
-                    if (outcome === 'accepted') {
-                        showNotification('App installed successfully!', 'success');
-                    }
-                }
-            });
-            
-            document.body.appendChild(installButton);
-            
-            // Auto-remove after 10 seconds
-            setTimeout(() => {
-                if (document.body.contains(installButton)) {
-                    installButton.style.opacity = '0';
-                    setTimeout(() => {
-                        if (document.body.contains(installButton)) {
-                            document.body.removeChild(installButton);
-                        }
-                    }, 300);
-                }
-            }, 10000);
-        });
-
-        // Handle connection errors more gracefully
-        window.addEventListener('online', () => {
-            showNotification('Connection restored', 'success');
-            if (gasUrl) {
-                updateStatus();
-            }
-        });
-
-        window.addEventListener('offline', () => {
-            updateStatusIndicator('stopped', 'Offline');
-            showNotification('Connection lost', 'error');
-        });
-    </script>
 </body>
 </html>
