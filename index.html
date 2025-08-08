@@ -1,3 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 0; }
+        h1 { color: #0ff; margin: 20px; }
+        .status-indicator { display: inline-block; padding: 4px 8px; border-radius: 4px; }
+        .status-running { background-color: green; }
+        .status-stopped { background-color: red; }
+        .notification { margin: 10px 20px; }
+        table { border-collapse: collapse; width: 96%; margin: 20px; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+        th { background-color: #1e1e1e; }
+        button { margin: 5px; padding: 6px 12px; }
+    </style>
+</head>
+<body>
+
+<h1>Crypto Dashboard</h1>
+
+<div style="margin: 20px;">
+    <button onclick="changeUrl()">Change URL</button>
+    <button onclick="testConnection()">Test Connection</button>
+    <button onclick="startEngine()">Start Engine</button>
+    <button onclick="stopEngine()">Stop Engine</button>
+    <button onclick="runManualScan()">Manual Scan</button>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<div style="margin: 20px;">
+    Status: <span id="status" class="status-indicator status-stopped">Stopped</span>
+</div>
+
+<table id="coinsTable">
+    <thead>
+        <tr>
+            <th>Coin</th>
+            <th>Price</th>
+            <th>24h %</th>
+            <th>RSI Est</th>
+            <th>Momentum</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+let gasUrl = localStorage.getItem('gasUrl') || '';
+
+function showNotification(msg, type) {
+    const el = document.getElementById('notification');
+    el.textContent = msg;
+    el.style.color = type === 'error' ? 'red' : (type === 'success' ? 'lime' : '#fff');
+}
+
+function updateStatusIndicator(status, text) {
+    const el = document.getElementById('status');
+    el.textContent = text || (status === 'running' ? 'Running' : 'Stopped');
+    el.className = 'status-indicator ' + (status === 'running' ? 'status-running' : 'status-stopped');
+}
+
+// ✅ Patched makeRequest – sends pure JSON to Apps Script
 async function makeRequest(action, data = {}) {
     if (!gasUrl) {
         showNotification('No connection URL configured', 'error');
@@ -27,3 +92,24 @@ async function makeRequest(action, data = {}) {
         return null;
     }
 }
+
+// --- Button handlers ---
+function changeUrl() {
+    const newUrl = prompt('Enter Google Apps Script Web App URL:', gasUrl);
+    if (newUrl) {
+        gasUrl = newUrl;
+        localStorage.setItem('gasUrl', gasUrl);
+        showNotification('URL updated', 'success');
+    }
+}
+
+async function testConnection() {
+    const res = await makeRequest('testApi');
+    if (res && res.success) {
+        showNotification(`Connection OK – Coins fetched: ${res.data.coinsFetched}`, 'success');
+    } else {
+        showNotification('Connection failed', 'error');
+    }
+}
+
+async
