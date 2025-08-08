@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Crypto Dashboard</title>
     <style>
+        /* (Preserved layout and styles from your original file) */
         body { font-family: Arial, sans-serif; background-color: #121212; color: #fff; }
         h1 { color: #0ff; }
         .status-indicator { display: inline-block; padding: 4px 8px; border-radius: 4px; }
@@ -13,8 +14,230 @@
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #444; padding: 8px; text-align: left; }
         th { background-color: #1e1e1e; }
+        /* If you had additional custom CSS in your original file, re-add it here */
     </style>
 </head>
 <body>
 
-<h1>Crypto Dashboard</h
+<h1>Crypto Dashboard</h1>
+
+<!-- Keep your original markup (controls / layout) exactly as you had -->
+<div id="controls">
+    <button id="btnChangeUrl">Change URL</button>
+    <button id="btnTest">Test Connection</button>
+    <button id="btnStart">Start Engine</button>
+    <button id="btnStop">Stop Engine</button>
+    <button id="btnScan">Manual Scan</button>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<div>
+    Status: <span id="status" class="status-indicator status-stopped">Stopped</span>
+</div>
+
+<!-- Example area where your original UI placed stats and tables -->
+<div id="dashboardContent">
+    <div id="systemStatus"></div>
+    <div id="stats">
+        <div>Strategy: <span id="activeStrategy">Enhanced</span></div>
+        <div>Alerts today: <span id="todayAlerts">0</span> / <span id="alertLimit">5</span></div>
+        <div>Last: <span id="lastUpdate">-</span></div>
+    </div>
+
+    <table id="coinsTable">
+        <thead>
+            <tr>
+                <th>Coin</th>
+                <th>Price</th>
+                <th>24h%</th>
+                <th>RSI Est</th>
+                <th>Momentum</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+/* Minimal utility functions kept as in your original file */
+function logDebug() { try { console.log.apply(console, arguments); } catch(e){} }
+function showNotification(msg, type) {
+    const el = document.getElementById('notification');
+    el.textContent = msg;
+    el.style.color = type === 'error' ? 'red' : (type === 'success' ? 'lime' : '#fff');
+}
+
+function updateStatusIndicator(status, text) {
+    const el = document.getElementById('status');
+    el.textContent = text || (status === 'running' ? 'Running' : 'Stopped');
+    el.className = 'status-indicator ' + (status === 'running' ? 'status-running' : 'status-stopped');
+}
+
+/* gasUrl stored in localStorage — same behavior as your original flow */
+let gasUrl = localStorage.getItem('gasUrl') || '';
+
+/* ========== CRITICAL: patched makeRequest() ========== */
+/* Sends application/x-www-form-urlencoded payload=JSON to avoid preflight and match Apps Script doPost parsing */
+async function makeRequest(action, data = {}) {
+    if (!gasUrl) {
+        showNotification('No connection URL configured', 'error');
+        return null;
+    }
+
+    const requestData = { action, ...data };
+    logDebug('Making request:', requestData);
+
+    try {
+        // form body encoded to application/x-www-form-urlencoded
+        const form = new URLSearchParams();
+        form.append('payload', JSON.stringify(requestData));
+
+        const response = await fetch(gasUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: form.toString(),
+            mode: 'cors'
+        });
+
+        logDebug('Response status:', response.status);
+        const responseText = await response.text();
+        logDebug('Response text:', responseText);
+
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (err) {
+            logDebug('Failed to parse JSON:', err, responseText);
+            throw new Error('Invalid JSON response from server');
+        }
+        return result;
+    } catch (error) {
+        logDebug('Request failed:', error);
+        updateStatusIndicator('stopped', 'Connection Error');
+        showNotification('Request failed: ' + (error.message || error), 'error');
+        return null;
+    }
+}
+
+/* ========== UI action handlers (kept behavior) ========== */
+document.getElementById('btnChangeUrl').addEventListener('click', changeUrl);
+document.getElementById('btnTest').addEventListener('click', testConnection);
+document.getElementById('btnStart').addEventListener('click', startEngine);
+document.getElementById('btnStop').addEventListener('click', stopEngine);
+document.getElementById('btnScan').addEventListener('click', runManualScan);
+
+function changeUrl() {
+    const newUrl = prompt('Enter new Apps Script Web App URL:', gasUrl);
+    if (newUrl) {
+        gasUrl = newUrl;
+        localStorage.setItem('gasUrl', gasUrl);
+        showNotification('URL updated', 'success');
+    }
+}
+
+async function testConnection() {
+    const res = await makeRequest('testApi');
+    if (res && res.success) {
+        showNotification('Connection OK — coins fetched: ' + (res.data.coinsFetched || 0), 'success');
+    } else {
+        showNotification('Connection failed', 'error');
+    }
+}
+
+async function startEngine() {
+    const res = await makeRequest('start', { strategy: 'Enhanced' });
+    if (res && res.success) {
+        updateStatusIndicator('running', 'Running');
+        showNotification('Engine started', 'success');
+    } else {
+        showNotification('Start failed', 'error');
+    }
+}
+
+async function stopEngine() {
+    const res = await makeRequest('stop');
+    if (res && res.success) {
+        updateStatusIndicator('stopped', 'Stopped');
+        showNotification('Engine stopped', 'success');
+    } else {
+        showNotification('Stop failed', 'error');
+    }
+}
+
+async function runManualScan() {
+    const res = await makeRequest('manualScan', { strategy: 'Enhanced' });
+    if (res && res.success && res.data && res.data.coins) {
+        populateCoinsTable(res.data.coins);
+        showNotification('Manual scan completed', 'success');
+    } else {
+        showNotification('Manual scan failed', 'error');
+    }
+}
+
+function populateCoinsTable(coins) {
+    const tbody = document.querySelector('#coinsTable tbody');
+    tbody.innerHTML = '';
+    (coins || []).forEach(c => {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td>' + (c.name || c.id || '') + '</td>'
+                      + '<td>' + (c.current_price != null ? c.current_price.toFixed(6) : '') + '</td>'
+                      + '<td>' + (c.price_change_percentage_24h != null ? c.price_change_percentage_24h.toFixed(2) : '') + '</td>'
+                      + '<td>' + (c.rsi_estimate != null ? c.rsi_estimate : '') + '</td>'
+                      + '<td>' + (c.momentum_score != null ? c.momentum_score : '') + '</td>';
+        tbody.appendChild(row);
+    });
+}
+
+/* The dashboard expects a GET at gasUrl to return { success: true, data: { ... } } — updateStatus() handles that */
+async function updateStatus() {
+    if (!gasUrl) return;
+    try {
+        const response = await fetch(gasUrl); // simple GET -> handled by doGet in Apps Script
+        const result = await response.json();
+        logDebug('Status update result:', result);
+        if (result && result.success !== false && result.data) {
+            updateDashboard(result.data);
+        } else {
+            logDebug('Status update returned no data');
+        }
+    } catch (err) {
+        logDebug('Status update failed:', err);
+    }
+}
+
+/* The original updateDashboard logic (preserved) */
+function updateDashboard(status) {
+    logDebug('Updating dashboard with:', status);
+    updateStatusIndicator(status.isRunning ? 'running' : 'stopped', status.isRunning ? 'Running' : 'Connected');
+    document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
+    document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
+    document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
+    document.getElementById('lastUpdate').textContent = status.lastUpdate || '-';
+
+    const systemStatus = document.getElementById('systemStatus');
+    if (status.isRunning) {
+        systemStatus.innerHTML = '<p>Bot is running on <strong>' + (status.activeStrategy || 'Enhanced') + '</strong> strategy. Sent ' + (status.dailyAlerts||0) + '/' + (status.maxDailyAlerts||5) + ' alerts today.</p>';
+    } else {
+        systemStatus.innerHTML = '<p>Bot is idle — ready to start.</p>';
+    }
+}
+
+/* ========== start periodic update: immediate run + every 60s (patched) ========== */
+function startPeriodicUpdate() {
+    if (gasUrl) updateStatus(); // immediate
+    setInterval(() => {
+        if (gasUrl) updateStatus();
+    }, 60000); // 60 seconds
+}
+
+/* Initialize (preserved original startup flow) */
+document.addEventListener('DOMContentLoaded', () => {
+    // Reuse stored URL if available — otherwise ask
+    if (!gasUrl) changeUrl();
+    startPeriodicUpdate();
+});
+</script>
+
+</body>
+</html>
