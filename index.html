@@ -745,6 +745,66 @@
             document.getElementById('stopBtn').addEventListener('click', stopEngine);
             document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
             document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+            
+            // Add strategy change listener
+            document.getElementById('strategySelect').addEventListener('change', handleStrategyChange);
+        }
+
+        async function handleStrategyChange() {
+            const newStrategy = document.getElementById('strategySelect').value;
+            const currentStatus = await getCurrentStatus();
+            
+            if (currentStatus && currentStatus.isRunning) {
+                // If engine is running, ask user if they want to restart with new strategy
+                const confirmRestart = confirm(
+                    `Engine is currently running with ${currentStatus.activeStrategy} strategy.\n\n` +
+                    `Do you want to restart with ${newStrategy} strategy?`
+                );
+                
+                if (confirmRestart) {
+                    showNotification(`Switching to ${newStrategy} strategy...`, 'info');
+                    
+                    // Stop current engine and start with new strategy
+                    const stopResult = await makeRequest('stop');
+                    if (stopResult && stopResult.success) {
+                        // Wait a moment then start with new strategy
+                        setTimeout(async () => {
+                            const startResult = await makeRequest('start', { strategy: newStrategy });
+                            if (startResult && startResult.success) {
+                                showNotification(`Successfully switched to ${newStrategy} strategy!`, 'success');
+                                updateStatus();
+                            } else {
+                                showNotification('Failed to restart with new strategy', 'error');
+                            }
+                        }, 1000);
+                    }
+                } else {
+                    // Revert selection if user cancels
+                    if (currentStatus.activeStrategy) {
+                        document.getElementById('strategySelect').value = currentStatus.activeStrategy;
+                    }
+                }
+            } else {
+                // Engine is stopped, just update the strategy preference
+                const result = await makeRequest('changeStrategy', { strategy: newStrategy });
+                if (result && result.success) {
+                    showNotification(`Strategy changed to ${newStrategy}`, 'success');
+                    document.getElementById('activeStrategy').textContent = newStrategy;
+                }
+            }
+        }
+
+        async function getCurrentStatus() {
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const result = await response.json();
+                return result.success ? result.data : null;
+            } catch (error) {
+                return null;
+            }
         }
 
         function startPeriodicUpdate() {
@@ -846,13 +906,20 @@
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
             btn.disabled = true;
 
-            const result = await makeRequest('start', { strategy });
-            
-            if (result && result.success) {
-                showNotification(`Engine started with ${strategy} strategy!`, 'success');
-                updateStatus();
-            } else {
-                showNotification('Failed to start engine: ' + (result?.error || 'Unknown error'), 'error');
+            try {
+                const result = await makeRequest('start', { strategy });
+                
+                if (result && result.success) {
+                    showNotification(`Engine started with ${strategy} strategy!`, 'success');
+                    // Force immediate status update
+                    setTimeout(() => {
+                        updateStatus();
+                    }, 1000);
+                } else {
+                    throw new Error(result?.error || 'Unknown error');
+                }
+            } catch (error) {
+                showNotification('Failed to start engine: ' + error.message, 'error');
                 btn.innerHTML = '<span>🚀</span> Start Engine';
                 btn.disabled = false;
             }
@@ -864,15 +931,28 @@
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
             btn.disabled = true;
 
-            const result = await makeRequest('stop');
-            
-            if (result && result.success) {
-                showNotification('Engine stopped successfully!', 'success');
-                updateStatus();
-            } else {
-                showNotification('Failed to stop engine: ' + (result?.error || 'Unknown error'), 'error');
+            try {
+                const result = await makeRequest('stop');
+                
+                if (result && result.success) {
+                    showNotification('Engine stopped successfully!', 'success');
+                    // Force immediate status update
+                    setTimeout(() => {
+                        updateStatus();
+                    }, 1000);
+                } else {
+                    throw new Error(result?.error || 'Unknown error');
+                }
+            } catch (error) {
+                showNotification('Failed to stop engine: ' + error.message, 'error');
+                // Force button reset even if stop failed
                 btn.innerHTML = '<span>⏹️</span> Stop Engine';
                 btn.disabled = false;
+                
+                // Try to update status anyway
+                setTimeout(() => {
+                    updateStatus();
+                }, 1000);
             }
         }
 
@@ -883,13 +963,22 @@
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
             btn.disabled = true;
 
-            const result = await makeRequest('manualScan', { strategy });
-            
-            if (result && result.success) {
-                showNotification(`Manual scan completed with ${strategy} strategy!`, 'success');
-                updateStatus();
-            } else {
-                showNotification('Manual scan failed: ' + (result?.error || 'Unknown error'), 'error');
+            try {
+                const result = await makeRequest('manualScan', { strategy });
+                
+                if (result && result.success) {
+                    showNotification(`Manual scan completed with ${strategy} strategy!`, 'success');
+                    // Update the active strategy display
+                    document.getElementById('activeStrategy').textContent = strategy;
+                    // Force status update
+                    setTimeout(() => {
+                        updateStatus();
+                    }, 1000);
+                } else {
+                    throw new Error(result?.error || 'Unknown error');
+                }
+            } catch (error) {
+                showNotification('Manual scan failed: ' + error.message, 'error');
             }
 
             btn.innerHTML = '<span>🔍</span> Run Manual Scan';
@@ -919,15 +1008,16 @@
         }
 
         function updateDashboard(status) {
+            // Update status indicator
             updateStatusIndicator(
                 status.isRunning ? 'running' : 'connected',
                 status.isRunning ? 'Running' : 'Connected'
             );
 
-            // Update stats
+            // Update stats with proper error handling
             document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
-            document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
-            document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
+            document.getElementById('todayAlerts').textContent = String(status.dailyAlerts || '0');
+            document.getElementById('alertLimit').textContent = String(status.maxDailyAlerts || '5');
             
             // Update last update time
             if (status.lastUpdate) {
@@ -939,35 +1029,49 @@
                 }
             }
 
-            // Update buttons
+            // Update button states with proper handling
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
             const strategySelect = document.getElementById('strategySelect');
 
             if (status.isRunning) {
+                // Engine is running
                 startBtn.disabled = true;
                 startBtn.innerHTML = '<span>✅</span> Engine Running';
+                startBtn.style.opacity = '0.7';
+                
                 stopBtn.disabled = false;
                 stopBtn.innerHTML = '<span>⏹️</span> Stop Engine';
+                stopBtn.style.opacity = '1';
+                
                 strategySelect.disabled = true;
+                strategySelect.style.opacity = '0.7';
             } else {
+                // Engine is stopped
                 startBtn.disabled = false;
                 startBtn.innerHTML = '<span>🚀</span> Start Engine';
+                startBtn.style.opacity = '1';
+                
                 stopBtn.disabled = true;
                 stopBtn.innerHTML = '<span>⏹️</span> Stopped';
+                stopBtn.style.opacity = '0.7';
+                
                 strategySelect.disabled = false;
+                strategySelect.style.opacity = '1';
             }
 
-            // Sync strategy selection
+            // Sync strategy selection (important for strategy switching)
             if (status.activeStrategy && strategySelect.value !== status.activeStrategy) {
                 strategySelect.value = status.activeStrategy;
+                console.log('Strategy synced to:', status.activeStrategy);
             }
 
-            // Update system status
+            // Update system status indicators
             document.getElementById('connectionStatus').textContent = 'Connected';
             document.getElementById('sheetAccess').textContent = 'OK';
             document.getElementById('telegramStatus').textContent = status.isRunning ? 'Active' : 'Ready';
             
+            // Update last API call time
             if (status.lastApiCall && status.lastApiCall > 0) {
                 try {
                     const lastCall = new Date(status.lastApiCall);
