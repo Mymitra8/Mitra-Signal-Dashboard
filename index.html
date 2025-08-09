@@ -4,33 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mitra Signal - Trading Dashboard</title>
-    <meta name="theme-color" content="#1a1b23">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4aa'%3E%3Cpath d='M12 2l8 3.738v7.524l-8 3.738-8-3.738V5.738L12 2z'/%3E%3C/svg%3E">
-    
     <style>
-        :root {
-            --bg-primary: #0a0b0f;
-            --bg-secondary: #1a1b23;
-            --bg-card: #252730;
-            --bg-hover: #2a2d3a;
-            --text-primary: #ffffff;
-            --text-secondary: #a1a8b7;
-            --text-muted: #6b7280;
-            --accent-primary: #00d4aa;
-            --accent-secondary: #0ea5e9;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --border: #374151;
-            --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            --gradient-error: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -39,10 +13,9 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            background: #0a0b0f;
+            color: #ffffff;
             line-height: 1.6;
-            overflow-x: hidden;
             min-height: 100vh;
         }
 
@@ -50,24 +23,14 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            min-height: 100vh;
         }
 
-        /* Header */
         .header {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
+            background: #1a1b23;
+            border: 1px solid #374151;
             border-radius: 20px;
             padding: 24px;
             margin-bottom: 24px;
-            position: sticky;
-            top: 20px;
-            z-index: 100;
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow);
-        }
-
-        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -84,7 +47,7 @@
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -97,7 +60,7 @@
         .logo-text {
             font-size: 24px;
             font-weight: 700;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -116,19 +79,19 @@
 
         .status-running {
             background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
+            color: #10b981;
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .status-stopped {
             background: rgba(239, 68, 68, 0.1);
-            color: var(--error);
+            color: #ef4444;
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .status-connected {
             background: rgba(14, 165, 233, 0.1);
-            color: var(--accent-secondary);
+            color: #0ea5e9;
             border: 1px solid rgba(14, 165, 233, 0.3);
         }
 
@@ -144,7 +107,6 @@
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
-        /* Setup Modal */
         .modal {
             position: fixed;
             top: 0;
@@ -160,13 +122,12 @@
         }
 
         .modal-content {
-            background: var(--bg-card);
+            background: #252730;
             border-radius: 20px;
             padding: 32px;
             max-width: 500px;
             width: 100%;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            border: 1px solid #374151;
         }
 
         .modal-title {
@@ -177,7 +138,7 @@
         }
 
         .modal-description {
-            color: var(--text-secondary);
+            color: #a1a8b7;
             margin-bottom: 24px;
             text-align: center;
             line-height: 1.6;
@@ -185,11 +146,11 @@
 
         .form-input {
             width: 100%;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
+            background: #1a1b23;
+            border: 2px solid #374151;
             border-radius: 12px;
             padding: 16px;
-            color: var(--text-primary);
+            color: #ffffff;
             font-size: 16px;
             margin-bottom: 16px;
             transition: all 0.3s ease;
@@ -197,15 +158,10 @@
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-primary);
+            border-color: #00d4aa;
             box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
         }
 
-        .form-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -214,35 +170,17 @@
         }
 
         .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+            background: #252730;
+            border: 1px solid #374151;
             border-radius: 16px;
             padding: 24px;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-4px);
-            box-shadow: var(--shadow);
-            border-color: var(--accent-primary);
-        }
-
-        .stat-card:hover::before {
-            opacity: 1;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            border-color: #00d4aa;
         }
 
         .stat-header {
@@ -254,7 +192,7 @@
 
         .stat-title {
             font-size: 14px;
-            color: var(--text-secondary);
+            color: #a1a8b7;
             font-weight: 500;
         }
 
@@ -272,7 +210,7 @@
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 8px;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -280,19 +218,14 @@
 
         .stat-description {
             font-size: 12px;
-            color: var(--text-muted);
+            color: #6b7280;
         }
 
-        /* Control Panel */
         .control-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
+            background: #252730;
+            border: 1px solid #374151;
             border-radius: 20px;
             padding: 32px;
-            margin-bottom: 32px;
-        }
-
-        .control-header {
             margin-bottom: 32px;
         }
 
@@ -303,8 +236,9 @@
         }
 
         .control-subtitle {
-            color: var(--text-secondary);
+            color: #a1a8b7;
             font-size: 16px;
+            margin-bottom: 32px;
         }
 
         .control-grid {
@@ -328,31 +262,31 @@
         .form-label {
             font-size: 14px;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: #a1a8b7;
         }
 
         .form-select {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
+            background: #1a1b23;
+            border: 2px solid #374151;
             border-radius: 12px;
             padding: 12px 16px;
-            color: var(--text-primary);
+            color: #ffffff;
             font-size: 16px;
             transition: all 0.3s ease;
         }
 
         .form-select:focus {
             outline: none;
-            border-color: var(--accent-primary);
+            border-color: #00d4aa;
             box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
         }
 
         .btn {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
+            background: #1a1b23;
+            border: 2px solid #374151;
             border-radius: 12px;
             padding: 16px 24px;
-            color: var(--text-primary);
+            color: #ffffff;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -362,28 +296,11 @@
             justify-content: center;
             gap: 8px;
             text-decoration: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn:hover::before {
-            left: 100%;
         }
 
         .btn-primary {
-            background: var(--gradient-success);
-            border-color: var(--success);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #10b981;
             color: white;
         }
 
@@ -393,8 +310,8 @@
         }
 
         .btn-danger {
-            background: var(--gradient-error);
-            border-color: var(--error);
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: #ef4444;
             color: white;
         }
 
@@ -404,8 +321,8 @@
         }
 
         .btn-secondary {
-            background: var(--gradient-primary);
-            border-color: var(--accent-secondary);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #0ea5e9;
             color: white;
         }
 
@@ -421,7 +338,6 @@
             box-shadow: none !important;
         }
 
-        /* Loading States */
         .loading {
             display: inline-flex;
             align-items: center;
@@ -441,21 +357,38 @@
             to { transform: rotate(360deg); }
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 64px 32px;
-            color: var(--text-muted);
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            max-width: 350px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
         }
 
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
+        .notification.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
-        /* System Status Section */
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
         .system-status {
-            background: var(--bg-secondary);
+            background: #1a1b23;
             border-radius: 16px;
             padding: 24px;
             margin-top: 24px;
@@ -469,120 +402,46 @@
         }
 
         .status-item {
-            background: var(--bg-card);
+            background: #252730;
             padding: 16px;
             border-radius: 12px;
-            border: 1px solid var(--border);
+            border: 1px solid #374151;
         }
 
         .status-item-title {
             font-size: 12px;
-            color: var(--text-secondary);
+            color: #a1a8b7;
             margin-bottom: 8px;
             font-weight: 600;
         }
 
         .status-item-value {
             font-size: 16px;
-            color: var(--text-primary);
+            color: #ffffff;
             font-weight: 600;
         }
 
-        /* Mobile Optimizations */
         @media (max-width: 768px) {
             .container {
                 padding: 16px;
             }
 
             .header {
-                padding: 20px;
-                border-radius: 16px;
-                top: 16px;
-            }
-
-            .header-content {
                 flex-direction: column;
                 text-align: center;
             }
 
             .stats-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
-            }
-
-            .stat-card {
-                padding: 20px;
-            }
-
-            .control-panel {
-                padding: 24px;
-                border-radius: 16px;
             }
 
             .control-grid {
                 grid-template-columns: 1fr;
-                gap: 24px;
             }
-
-            .modal-content {
-                padding: 24px;
-                margin: 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .logo-text {
-                font-size: 20px;
-            }
-
-            .stat-value {
-                font-size: 24px;
-            }
-
-            .control-title {
-                font-size: 20px;
-            }
-        }
-
-        /* Notification Styles */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            padding: 16px 24px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            max-width: 350px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            box-shadow: var(--shadow);
-        }
-
-        .notification.success {
-            background: var(--gradient-success);
-        }
-
-        .notification.error {
-            background: var(--gradient-error);
-        }
-
-        .notification.info {
-            background: var(--gradient-primary);
-        }
-
-        .notification.warning {
-            background: var(--gradient-warning);
-        }
-
-        .notification.show {
-            transform: translateX(0);
         }
     </style>
 </head>
 <body>
-    <!-- Setup Modal -->
     <div class="modal" id="setupModal">
         <div class="modal-content">
             <h2 class="modal-title">🚀 Welcome to Mitra Signal</h2>
@@ -607,26 +466,22 @@
     </div>
 
     <div class="container">
-        <!-- Header -->
         <header class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <div class="logo-icon">M</div>
-                    <div class="logo-text">Mitra Signal</div>
-                </div>
-                <div class="status-indicator" id="statusIndicator">
-                    <div class="pulse" id="statusPulse"></div>
-                    <span id="statusText">Connecting...</span>
-                </div>
+            <div class="logo">
+                <div class="logo-icon">M</div>
+                <div class="logo-text">Mitra Signal</div>
+            </div>
+            <div class="status-indicator" id="statusIndicator">
+                <div class="pulse" id="statusPulse"></div>
+                <span id="statusText">Connecting...</span>
             </div>
         </header>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-header">
                     <span class="stat-title">Active Strategy</span>
-                    <div class="stat-icon" style="background: var(--gradient-primary);">📈</div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📈</div>
                 </div>
                 <div class="stat-value" id="activeStrategy">Enhanced</div>
                 <div class="stat-description">Current trading strategy</div>
@@ -635,7 +490,7 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <span class="stat-title">Today's Alerts</span>
-                    <div class="stat-icon" style="background: var(--gradient-success);">🚨</div>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🚨</div>
                 </div>
                 <div class="stat-value" id="todayAlerts">0</div>
                 <div class="stat-description">Signals sent today</div>
@@ -644,4 +499,428 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <span class="stat-title">Alert Limit</span>
-                    <div class="stat
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">⚡</div>
+                </div>
+                <div class="stat-value" id="alertLimit">5</div>
+                <div class="stat-description">Daily maximum alerts</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Last Update</span>
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🕒</div>
+                </div>
+                <div class="stat-value" id="lastUpdate" style="font-size: 18px;">Never</div>
+                <div class="stat-description">Engine last activity</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h2 class="control-title">Engine Control</h2>
+            <p class="control-subtitle">Manage your trading bot and strategy settings</p>
+            <div class="control-grid">
+                <div class="control-section">
+                    <div class="form-group">
+                        <label class="form-label">Trading Strategy</label>
+                        <select class="form-select" id="strategySelect">
+                            <option value="Enhanced">Enhanced Multi-Strategy</option>
+                            <option value="Ganu">Ganu Strategy (Conservative)</option>
+                            <option value="Scalping">Quick Scalp (Aggressive)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="startBtn">
+                        <span>🚀</span> Start Engine
+                    </button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>
+                        <span>⏹️</span> Stop Engine
+                    </button>
+                </div>
+
+                <div class="control-section">
+                    <button class="btn btn-secondary" id="manualScanBtn">
+                        <span>🔍</span> Run Manual Scan
+                    </button>
+                    <button class="btn" id="testConnectionBtn">
+                        <span>🧪</span> Test Connection
+                    </button>
+                    <a href="https://docs.google.com/spreadsheets/d/1_LnY1tsOjftlbBzYpWIew3dMgNhKxpoOsOWFE0Eg_Es/edit" 
+                       target="_blank" class="btn">
+                        <span>📊</span> View Sheets
+                    </a>
+                    <button class="btn" onclick="resetConnection()">
+                        <span>⚙️</span> Change URL
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h2 class="control-title">System Status</h2>
+            <p class="control-subtitle">Monitor your trading bot performance</p>
+            <div class="system-status">
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-item-title">Connection Status</div>
+                        <div class="status-item-value" id="connectionStatus">Disconnected</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-item-title">Last API Call</div>
+                        <div class="status-item-value" id="lastApiCall">Never</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-item-title">Sheet Access</div>
+                        <div class="status-item-value" id="sheetAccess">Unknown</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-item-title">Telegram Status</div>
+                        <div class="status-item-value" id="telegramStatus">Unknown</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gasUrl = '';
+        let updateInterval = null;
+
+        // Global storage variable for environments without localStorage
+        let memoryStorage = {};
+
+        // Safe storage functions
+        function getStoredUrl() {
+            try {
+                return localStorage.getItem('mitraGasUrl') || memoryStorage.gasUrl || '';
+            } catch (e) {
+                return memoryStorage.gasUrl || '';
+            }
+        }
+
+        function setStoredUrl(url) {
+            try {
+                localStorage.setItem('mitraGasUrl', url);
+            } catch (e) {
+                console.log('localStorage not available, using memory storage');
+            }
+            memoryStorage.gasUrl = url;
+        }
+
+        function removeStoredUrl() {
+            try {
+                localStorage.removeItem('mitraGasUrl');
+            } catch (e) {
+                console.log('localStorage not available');
+            }
+            delete memoryStorage.gasUrl;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUrl = getStoredUrl();
+            if (savedUrl) {
+                gasUrl = savedUrl;
+                document.getElementById('setupModal').style.display = 'none';
+                initializeDashboard();
+            } else {
+                document.getElementById('setupModal').style.display = 'flex';
+            }
+        });
+
+        function saveGasUrl() {
+            const input = document.getElementById('gasUrlInput');
+            const url = input.value.trim();
+            
+            if (!url) {
+                showNotification('Please enter a valid URL', 'error');
+                return;
+            }
+
+            if (!url.includes('script.google.com')) {
+                showNotification('Please enter a valid Google Apps Script URL', 'error');
+                return;
+            }
+
+            gasUrl = url;
+            setStoredUrl(url);
+            document.getElementById('setupModal').style.display = 'none';
+            
+            showNotification('Connection saved! Testing...', 'success');
+            initializeDashboard();
+        }
+
+        function showHelp() {
+            const helpText = `To get your Google Apps Script URL:
+
+1. Go to script.google.com
+2. Create a new project
+3. Paste the Google Apps Script code
+4. Deploy → New Deployment → Web App
+5. Set access to "Anyone"
+6. Copy the URL and paste it here
+
+Need more help? Check the deployment guide!`;
+
+            alert(helpText);
+        }
+
+        function resetConnection() {
+            removeStoredUrl();
+            gasUrl = '';
+            document.getElementById('gasUrlInput').value = '';
+            document.getElementById('setupModal').style.display = 'flex';
+            
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        function initializeDashboard() {
+            updateStatusIndicator('stopped', 'Connecting...');
+            testConnection();
+            setupEventListeners();
+            startPeriodicUpdate();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('startBtn').addEventListener('click', startEngine);
+            document.getElementById('stopBtn').addEventListener('click', stopEngine);
+            document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
+            document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+        }
+
+        async function makeRequest(action, data = {}) {
+            if (!gasUrl) {
+                showNotification('No connection URL configured', 'error');
+                return null;
+            }
+
+            try {
+                const payload = { action, ...data };
+                
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Request failed:', error);
+                updateStatusIndicator('stopped', 'Connection Error');
+                document.getElementById('connectionStatus').textContent = 'Error';
+                showNotification('Connection failed: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        async function testConnection() {
+            const btn = document.getElementById('testConnectionBtn');
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Testing...</div>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    updateStatusIndicator('connected', 'Connected');
+                    document.getElementById('connectionStatus').textContent = 'Connected';
+                    document.getElementById('sheetAccess').textContent = 'OK';
+                    showNotification('Connection successful!', 'success');
+                    updateDashboard(result.data);
+                } else if (result.success) {
+                    updateStatusIndicator('connected', 'Connected');
+                    document.getElementById('connectionStatus').textContent = 'Connected';
+                    showNotification('Connection successful!', 'success');
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                updateStatusIndicator('stopped', 'Connection Failed');
+                document.getElementById('connectionStatus').textContent = 'Failed';
+                document.getElementById('sheetAccess').textContent = 'Error';
+                showNotification('Connection failed. Please check your URL.', 'error');
+            }
+
+            btn.innerHTML = '<span>🧪</span> Test Connection';
+            btn.disabled = false;
+        }
+
+        async function startEngine() {
+            const strategy = document.getElementById('strategySelect').value;
+            const btn = document.getElementById('startBtn');
+            
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
+            btn.disabled = true;
+
+            const result = await makeRequest('start', { strategy });
+            
+            if (result && result.success) {
+                showNotification('Engine started successfully!', 'success');
+                updateStatus();
+            } else {
+                showNotification('Failed to start engine: ' + (result?.error || 'Unknown error'), 'error');
+                btn.innerHTML = '<span>🚀</span> Start Engine';
+                btn.disabled = false;
+            }
+        }
+
+        async function stopEngine() {
+            const btn = document.getElementById('stopBtn');
+            
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
+            btn.disabled = true;
+
+            const result = await makeRequest('stop');
+            
+            if (result && result.success) {
+                showNotification('Engine stopped successfully!', 'success');
+                updateStatus();
+            } else {
+                showNotification('Failed to stop engine: ' + (result?.error || 'Unknown error'), 'error');
+                btn.innerHTML = '<span>⏹️</span> Stop Engine';
+                btn.disabled = false;
+            }
+        }
+
+        async function runManualScan() {
+            const strategy = document.getElementById('strategySelect').value;
+            const btn = document.getElementById('manualScanBtn');
+            
+            btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
+            btn.disabled = true;
+
+            const result = await makeRequest('manualScan', { strategy });
+            
+            if (result && result.success) {
+                showNotification('Manual scan completed!', 'success');
+                updateStatus();
+            } else {
+                showNotification('Manual scan failed: ' + (result?.error || 'Unknown error'), 'error');
+            }
+
+            btn.innerHTML = '<span>🔍</span> Run Manual Scan';
+            btn.disabled = false;
+        }
+
+        async function updateStatus() {
+            if (!gasUrl) return;
+
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    updateDashboard(result.data);
+                } else {
+                    console.log('Status update failed:', result);
+                }
+            } catch (error) {
+                console.error('Status update failed:', error);
+            }
+        }
+
+        function updateDashboard(status) {
+            updateStatusIndicator(
+                status.isRunning ? 'running' : 'connected',
+                status.isRunning ? 'Running' : 'Connected'
+            );
+
+            document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
+            document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
+            document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
+            
+            if (status.lastUpdate) {
+                try {
+                    const date = new Date(status.lastUpdate);
+                    document.getElementById('lastUpdate').textContent = date.toLocaleTimeString();
+                } catch (e) {
+                    document.getElementById('lastUpdate').textContent = 'Just now';
+                }
+            }
+
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const strategySelect = document.getElementById('strategySelect');
+
+            if (status.isRunning) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<span>🚀</span> Engine Running';
+                stopBtn.disabled = false;
+                stopBtn.innerHTML = '<span>⏹️</span> Stop Engine';
+                strategySelect.disabled = true;
+            } else {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<span>🚀</span> Start Engine';
+                stopBtn.disabled = true;
+                stopBtn.innerHTML = '<span>⏹️</span> Stopped';
+                strategySelect.disabled = false;
+            }
+
+            if (status.activeStrategy && strategySelect.value !== status.activeStrategy) {
+                strategySelect.value = status.activeStrategy;
+            }
+
+            // Update system status
+            document.getElementById('connectionStatus').textContent = 'Connected';
+            if (status.lastApiCall && status.lastApiCall > 0) {
+                const lastCall = new Date(status.lastApiCall);
+                document.getElementById('lastApiCall').textContent = lastCall.toLocaleTimeString();
+            }
+        }
+
+        function updateStatusIndicator(status, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const pulse = document.getElementById('statusPulse');
+            const statusText = document.getElementById('statusText');
+
+            indicator.className = `status-indicator status-${status}`;
+            
+            if (status === 'running') {
+                pulse.style.backgroundColor = '#10b981';
+            } else if (status === 'connected') {
+                pulse.style.backgroundColor = '#0ea5e9';
+            } else {
+                pulse.style.backgroundColor = '#ef4444';
+            }
+            
+            statusText.textContent = text;
+        }
+
+        function showNotification(message, type = 'info') {
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            requestAnimationFrame(() => {
+                notification.classList.add('show');
+            });
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.
