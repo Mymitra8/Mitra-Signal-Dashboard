@@ -421,6 +421,28 @@
             font-weight: 600;
         }
 
+        .help-content {
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .help-step {
+            margin-bottom: 12px;
+            padding-left: 20px;
+        }
+
+        .help-code {
+            background: #1a1b23;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 16px;
@@ -437,6 +459,11 @@
 
             .control-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 10px;
+                padding: 24px;
             }
         }
     </style>
@@ -460,6 +487,41 @@
                 </button>
                 <button class="btn" onclick="showHelp()" style="flex: 1;">
                     Help
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal" style="display: none;">
+        <div class="modal-content">
+            <h2 class="modal-title">📖 Setup Instructions</h2>
+            <div class="help-content">
+                <div class="help-step">
+                    <strong>1.</strong> Go to <a href="https://script.google.com" target="_blank" style="color: #667eea;">script.google.com</a>
+                </div>
+                <div class="help-step">
+                    <strong>2.</strong> Create a new project and paste the Google Apps Script code
+                </div>
+                <div class="help-step">
+                    <strong>3.</strong> Click Deploy → New Deployment
+                </div>
+                <div class="help-step">
+                    <strong>4.</strong> Choose "Web App" as deployment type
+                </div>
+                <div class="help-step">
+                    <strong>5.</strong> Set "Execute as" to "Me" and "Who has access" to "Anyone"
+                </div>
+                <div class="help-step">
+                    <strong>6.</strong> Copy the Web App URL and paste it here
+                </div>
+                <div class="help-code">
+                    Example URL:<br>
+                    https://script.google.com/macros/s/AKfycbx.../exec
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="hideHelp()" style="flex: 1;">
+                    Got it!
                 </button>
             </div>
         </div>
@@ -649,18 +711,11 @@
         }
 
         function showHelp() {
-            const helpText = `To get your Google Apps Script URL:
+            document.getElementById('helpModal').style.display = 'flex';
+        }
 
-1. Go to script.google.com
-2. Create a new project
-3. Paste the Google Apps Script code
-4. Deploy → New Deployment → Web App
-5. Set access to "Anyone"
-6. Copy the URL and paste it here
-
-Need more help? Check the deployment guide!`;
-
-            alert(helpText);
+        function hideHelp() {
+            document.getElementById('helpModal').style.display = 'none';
         }
 
         function resetConnection() {
@@ -673,6 +728,9 @@ Need more help? Check the deployment guide!`;
                 clearInterval(updateInterval);
                 updateInterval = null;
             }
+            
+            updateStatusIndicator('stopped', 'Disconnected');
+            document.getElementById('connectionStatus').textContent = 'Disconnected';
         }
 
         function initializeDashboard() {
@@ -687,6 +745,15 @@ Need more help? Check the deployment guide!`;
             document.getElementById('stopBtn').addEventListener('click', stopEngine);
             document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
             document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+        }
+
+        function startPeriodicUpdate() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            
+            // Update status every 30 seconds
+            updateInterval = setInterval(updateStatus, 30000);
         }
 
         async function makeRequest(action, data = {}) {
@@ -717,7 +784,12 @@ Need more help? Check the deployment guide!`;
                 console.error('Request failed:', error);
                 updateStatusIndicator('stopped', 'Connection Error');
                 document.getElementById('connectionStatus').textContent = 'Error';
-                showNotification('Connection failed: ' + error.message, 'error');
+                
+                if (error.message.includes('CORS') || error.message.includes('network')) {
+                    showNotification('Connection failed: Please check CORS settings in Google Apps Script', 'error');
+                } else {
+                    showNotification('Connection failed: ' + error.message, 'error');
+                }
                 return null;
             }
         }
@@ -739,6 +811,7 @@ Need more help? Check the deployment guide!`;
                     updateStatusIndicator('connected', 'Connected');
                     document.getElementById('connectionStatus').textContent = 'Connected';
                     document.getElementById('sheetAccess').textContent = 'OK';
+                    document.getElementById('telegramStatus').textContent = 'Ready';
                     showNotification('Connection successful!', 'success');
                     updateDashboard(result.data);
                 } else if (result.success) {
@@ -746,14 +819,20 @@ Need more help? Check the deployment guide!`;
                     document.getElementById('connectionStatus').textContent = 'Connected';
                     showNotification('Connection successful!', 'success');
                 } else {
-                    throw new Error('Invalid response from server');
+                    throw new Error(result.error || 'Invalid response from server');
                 }
             } catch (error) {
                 console.error('Connection test failed:', error);
                 updateStatusIndicator('stopped', 'Connection Failed');
                 document.getElementById('connectionStatus').textContent = 'Failed';
                 document.getElementById('sheetAccess').textContent = 'Error';
-                showNotification('Connection failed. Please check your URL.', 'error');
+                document.getElementById('telegramStatus').textContent = 'Error';
+                
+                if (error.message.includes('CORS')) {
+                    showNotification('CORS error: Please redeploy your Google Apps Script with proper settings', 'error');
+                } else {
+                    showNotification('Connection failed. Please check your URL and deployment settings.', 'error');
+                }
             }
 
             btn.innerHTML = '<span>🧪</span> Test Connection';
@@ -770,7 +849,7 @@ Need more help? Check the deployment guide!`;
             const result = await makeRequest('start', { strategy });
             
             if (result && result.success) {
-                showNotification('Engine started successfully!', 'success');
+                showNotification(`Engine started with ${strategy} strategy!`, 'success');
                 updateStatus();
             } else {
                 showNotification('Failed to start engine: ' + (result?.error || 'Unknown error'), 'error');
@@ -807,7 +886,7 @@ Need more help? Check the deployment guide!`;
             const result = await makeRequest('manualScan', { strategy });
             
             if (result && result.success) {
-                showNotification('Manual scan completed!', 'success');
+                showNotification(`Manual scan completed with ${strategy} strategy!`, 'success');
                 updateStatus();
             } else {
                 showNotification('Manual scan failed: ' + (result?.error || 'Unknown error'), 'error');
@@ -835,6 +914,7 @@ Need more help? Check the deployment guide!`;
                 }
             } catch (error) {
                 console.error('Status update failed:', error);
+                // Don't show notification for periodic update failures
             }
         }
 
@@ -844,10 +924,12 @@ Need more help? Check the deployment guide!`;
                 status.isRunning ? 'Running' : 'Connected'
             );
 
+            // Update stats
             document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
             document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
             document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
             
+            // Update last update time
             if (status.lastUpdate) {
                 try {
                     const date = new Date(status.lastUpdate);
@@ -857,13 +939,14 @@ Need more help? Check the deployment guide!`;
                 }
             }
 
+            // Update buttons
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
             const strategySelect = document.getElementById('strategySelect');
 
             if (status.isRunning) {
                 startBtn.disabled = true;
-                startBtn.innerHTML = '<span>🚀</span> Engine Running';
+                startBtn.innerHTML = '<span>✅</span> Engine Running';
                 stopBtn.disabled = false;
                 stopBtn.innerHTML = '<span>⏹️</span> Stop Engine';
                 strategySelect.disabled = true;
@@ -875,15 +958,25 @@ Need more help? Check the deployment guide!`;
                 strategySelect.disabled = false;
             }
 
+            // Sync strategy selection
             if (status.activeStrategy && strategySelect.value !== status.activeStrategy) {
                 strategySelect.value = status.activeStrategy;
             }
 
             // Update system status
             document.getElementById('connectionStatus').textContent = 'Connected';
+            document.getElementById('sheetAccess').textContent = 'OK';
+            document.getElementById('telegramStatus').textContent = status.isRunning ? 'Active' : 'Ready';
+            
             if (status.lastApiCall && status.lastApiCall > 0) {
-                const lastCall = new Date(status.lastApiCall);
-                document.getElementById('lastApiCall').textContent = lastCall.toLocaleTimeString();
+                try {
+                    const lastCall = new Date(status.lastApiCall);
+                    document.getElementById('lastApiCall').textContent = lastCall.toLocaleTimeString();
+                } catch (e) {
+                    document.getElementById('lastApiCall').textContent = 'Recent';
+                }
+            } else {
+                document.getElementById('lastApiCall').textContent = 'Never';
             }
         }
 
@@ -892,8 +985,10 @@ Need more help? Check the deployment guide!`;
             const pulse = document.getElementById('statusPulse');
             const statusText = document.getElementById('statusText');
 
+            // Remove all status classes
             indicator.className = `status-indicator status-${status}`;
             
+            // Update pulse color
             if (status === 'running') {
                 pulse.style.backgroundColor = '#10b981';
             } else if (status === 'connected') {
@@ -906,6 +1001,7 @@ Need more help? Check the deployment guide!`;
         }
 
         function showNotification(message, type = 'info') {
+            // Remove existing notifications
             const existingNotifications = document.querySelectorAll('.notification');
             existingNotifications.forEach(n => n.remove());
 
@@ -915,12 +1011,36 @@ Need more help? Check the deployment guide!`;
             
             document.body.appendChild(notification);
             
+            // Trigger animation
             requestAnimationFrame(() => {
                 notification.classList.add('show');
             });
             
+            // Auto-hide after 5 seconds
             setTimeout(() => {
                 notification.classList.remove('show');
                 setTimeout(() => {
                     if (document.body.contains(notification)) {
-                        document.body.
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Handle page visibility changes to pause/resume updates
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                    updateInterval = null;
+                }
+            } else {
+                if (gasUrl) {
+                    startPeriodicUpdate();
+                    updateStatus();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
