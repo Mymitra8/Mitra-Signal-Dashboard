@@ -126,12 +126,6 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .status-connecting {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
         .pulse {
             width: 8px;
             height: 8px;
@@ -453,19 +447,6 @@
             opacity: 0.5;
         }
 
-        .debug-info {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: var(--text-muted);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
         /* Mobile Optimizations */
         @media (max-width: 768px) {
             .container {
@@ -520,6 +501,38 @@
             .control-title {
                 font-size: 20px;
             }
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            max-width: 300px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .notification.success {
+            background: var(--gradient-success);
+        }
+
+        .notification.error {
+            background: var(--gradient-error);
+        }
+
+        .notification.info {
+            background: var(--gradient-primary);
+        }
+
+        .notification.show {
+            transform: translateX(0);
         }
     </style>
 </head>
@@ -644,30 +657,26 @@
             </div>
         </div>
 
-        <!-- System Status -->
+        <!-- Recent Activity -->
         <div class="control-panel">
             <div class="control-header">
                 <h2 class="control-title">System Status</h2>
-                <p class="control-subtitle">Monitor your trading bot performance and logs</p>
+                <p class="control-subtitle">Monitor your trading bot performance</p>
             </div>
-            <div class="empty-state" id="systemStatus">
+            <div class="empty-state">
                 <div class="empty-icon">📊</div>
                 <p>Dashboard ready! Connect to your Google Apps Script to start monitoring signals.</p>
-            </div>
-            <div class="debug-info" id="debugInfo" style="display: none;">
-                <strong>Debug Information:</strong><br>
-                <span id="debugContent">No debug data available</span>
             </div>
         </div>
     </div>
 
     <script>
         let gasUrl = '';
-        let debugMode = false;
+        let updateInterval = null;
 
         // Show setup modal on first load
         document.addEventListener('DOMContentLoaded', function() {
-            const savedUrl = window.localStorage?.getItem('mitraGasUrl');
+            const savedUrl = getStoredUrl();
             if (savedUrl) {
                 gasUrl = savedUrl;
                 document.getElementById('setupModal').style.display = 'none';
@@ -676,6 +685,42 @@
                 document.getElementById('setupModal').style.display = 'flex';
             }
         });
+
+        // Storage functions that work in all environments
+        function getStoredUrl() {
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    return localStorage.getItem('mitraGasUrl');
+                }
+            } catch (e) {
+                console.log('localStorage not available, using memory storage');
+            }
+            return sessionStorage.getItem('mitraGasUrl') || '';
+        }
+
+        function setStoredUrl(url) {
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('mitraGasUrl', url);
+                } else {
+                    sessionStorage.setItem('mitraGasUrl', url);
+                }
+            } catch (e) {
+                console.log('Storage not available, URL will be lost on refresh');
+            }
+        }
+
+        function removeStoredUrl() {
+            try {
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.removeItem('mitraGasUrl');
+                } else {
+                    sessionStorage.removeItem('mitraGasUrl');
+                }
+            } catch (e) {
+                console.log('Storage not available');
+            }
+        }
 
         function saveGasUrl() {
             const input = document.getElementById('gasUrlInput');
@@ -692,9 +737,7 @@
             }
 
             gasUrl = url;
-            if (window.localStorage) {
-                window.localStorage.setItem('mitraGasUrl', url);
-            }
+            setStoredUrl(url);
             document.getElementById('setupModal').style.display = 'none';
             
             showNotification('Connection saved! Testing...', 'success');
@@ -717,16 +760,19 @@ Need more help? Check the deployment guide!`;
         }
 
         function resetConnection() {
-            if (window.localStorage) {
-                window.localStorage.removeItem('mitraGasUrl');
-            }
+            removeStoredUrl();
             gasUrl = '';
             document.getElementById('gasUrlInput').value = '';
             document.getElementById('setupModal').style.display = 'flex';
+            
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
         }
 
         function initializeDashboard() {
-            updateStatusIndicator('connecting', 'Connecting...');
+            updateStatusIndicator('stopped', 'Connecting...');
             testConnection();
             setupEventListeners();
             startPeriodicUpdate();
@@ -737,103 +783,78 @@ Need more help? Check the deployment guide!`;
             document.getElementById('stopBtn').addEventListener('click', stopEngine);
             document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
             document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
-            
-            // Enable debug mode with triple click on logo
-            let logoClickCount = 0;
-            document.querySelector('.logo').addEventListener('click', () => {
-                logoClickCount++;
-                setTimeout(() => logoClickCount = 0, 1000);
-                if (logoClickCount === 3) {
-                    debugMode = !debugMode;
-                    document.getElementById('debugInfo').style.display = debugMode ? 'block' : 'none';
-                    showNotification(debugMode ? 'Debug mode enabled' : 'Debug mode disabled', 'info');
-                }
-            });
         }
 
         async function makeRequest(action, data = {}) {
-    if (!gasUrl) {
-        showNotification('No connection URL configured', 'error');
-        return null;
-    }
+            if (!gasUrl) {
+                showNotification('No connection URL configured', 'error');
+                return null;
+            }
 
-    const requestData = { action, ...data };
-    logDebug('Making request:', requestData);
+            try {
+                const payload = { action, ...data };
+                
+                // Use proper JSON content type
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    mode: 'cors'
+                });
 
-    try {
-        // Use urlencoded form to avoid CORS preflight (no custom headers)
-        const form = new URLSearchParams();
-        form.append('payload', JSON.stringify(requestData));
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-        const response = await fetch(gasUrl, {
-            method: 'POST',
-            // Important: default headers for form-encoded body - no custom headers added
-            body: form.toString(),
-            mode: 'cors'
-        });
-
-        logDebug('Response status:', response.status);
-
-        const responseText = await response.text();
-        logDebug('Response text:', responseText);
-
-        let result;
-        try {
-            result = JSON.parse(responseText);
-        } catch (parseError) {
-            logDebug('JSON parse error:', parseError);
-            throw new Error('Invalid JSON response: ' + responseText);
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Request failed:', error);
+                updateStatusIndicator('stopped', 'Connection Error');
+                showNotification('Connection failed: ' + error.message, 'error');
+                return null;
+            }
         }
-
-        logDebug('Parsed result:', result);
-        return result;
-
-    } catch (error) {
-        logDebug('Request failed:', error);
-        updateStatusIndicator('stopped', 'Connection Error');
-        return null;
-	    }
-	}
-
 
         async function testConnection() {
             const btn = document.getElementById('testConnectionBtn');
-            const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Testing...</div>';
             btn.disabled = true;
 
             try {
-                updateStatusIndicator('connecting', 'Testing...');
+                // First try a GET request
+                const response = await fetch(gasUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
                 
-                // Try GET request first
-                const response = await fetch(gasUrl);
                 const result = await response.json();
                 
-                logDebug('Test connection result:', result);
-                
-                if (result.success !== false) {
+                if (result.success && result.data) {
                     updateStatusIndicator('stopped', 'Connected');
                     showNotification('Connection successful!', 'success');
-                    if (result.data) {
-                        updateDashboard(result.data);
-                    }
+                    updateDashboard(result.data);
+                } else if (result.success) {
+                    updateStatusIndicator('stopped', 'Connected');
+                    showNotification('Connection successful!', 'success');
                 } else {
-                    throw new Error(result.error || 'Invalid response');
+                    throw new Error('Invalid response from server');
                 }
             } catch (error) {
-                logDebug('Connection test failed:', error);
+                console.error('Connection test failed:', error);
                 updateStatusIndicator('stopped', 'Connection Failed');
-                showNotification('Connection failed: ' + error.message, 'error');
+                showNotification('Connection failed. Please check your URL.', 'error');
             }
 
-            btn.innerHTML = originalText;
+            btn.innerHTML = '<span>🧪</span> Test Connection';
             btn.disabled = false;
         }
 
         async function startEngine() {
             const strategy = document.getElementById('strategySelect').value;
             const btn = document.getElementById('startBtn');
-            const originalText = btn.innerHTML;
             
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
             btn.disabled = true;
@@ -844,16 +865,14 @@ Need more help? Check the deployment guide!`;
                 showNotification('Engine started successfully!', 'success');
                 updateStatus();
             } else {
-                const errorMsg = result?.error || 'Unknown error occurred';
-                showNotification('Failed to start engine: ' + errorMsg, 'error');
-                btn.innerHTML = originalText;
+                showNotification('Failed to start engine: ' + (result?.error || 'Unknown error'), 'error');
+                btn.innerHTML = '<span>🚀</span> Start Engine';
                 btn.disabled = false;
             }
         }
 
         async function stopEngine() {
             const btn = document.getElementById('stopBtn');
-            const originalText = btn.innerHTML;
             
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
             btn.disabled = true;
@@ -864,9 +883,8 @@ Need more help? Check the deployment guide!`;
                 showNotification('Engine stopped successfully!', 'success');
                 updateStatus();
             } else {
-                const errorMsg = result?.error || 'Unknown error occurred';
-                showNotification('Failed to stop engine: ' + errorMsg, 'error');
-                btn.innerHTML = originalText;
+                showNotification('Failed to stop engine: ' + (result?.error || 'Unknown error'), 'error');
+                btn.innerHTML = '<span>⏹️</span> Stop Engine';
                 btn.disabled = false;
             }
         }
@@ -874,7 +892,6 @@ Need more help? Check the deployment guide!`;
         async function runManualScan() {
             const strategy = document.getElementById('strategySelect').value;
             const btn = document.getElementById('manualScanBtn');
-            const originalText = btn.innerHTML;
             
             btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
             btn.disabled = true;
@@ -882,16 +899,13 @@ Need more help? Check the deployment guide!`;
             const result = await makeRequest('manualScan', { strategy });
             
             if (result && result.success) {
-                const scanData = result.data?.scanResult || {};
-                const message = `Scan completed: ${scanData.signalsFound || 0} signals found, ${scanData.alertsSent || 0} alerts sent`;
-                showNotification(message, 'success');
-                updateStatus();
+                showNotification('Manual scan completed!', 'success');
+                updateStatus(); // Refresh status after scan
             } else {
-                const errorMsg = result?.error || 'Unknown error occurred';
-                showNotification('Manual scan failed: ' + errorMsg, 'error');
+                showNotification('Manual scan failed: ' + (result?.error || 'Unknown error'), 'error');
             }
 
-            btn.innerHTML = originalText;
+            btn.innerHTML = '<span>🔍</span> Run Manual Scan';
             btn.disabled = false;
         }
 
@@ -899,37 +913,44 @@ Need more help? Check the deployment guide!`;
             if (!gasUrl) return;
 
             try {
-                const response = await fetch(gasUrl);
+                const response = await fetch(gasUrl, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
                 const result = await response.json();
                 
-                logDebug('Status update result:', result);
-                
-                if (result.success !== false && result.data) {
+                if (result.success && result.data) {
                     updateDashboard(result.data);
+                } else {
+                    console.log('Status update failed:', result);
                 }
             } catch (error) {
-                logDebug('Status update failed:', error);
+                console.error('Status update failed:', error);
+                // Don't show error notifications for background updates
             }
         }
 
         function updateDashboard(status) {
-            logDebug('Updating dashboard with:', status);
-
             // Update status indicator
             updateStatusIndicator(
                 status.isRunning ? 'running' : 'stopped',
                 status.isRunning ? 'Running' : 'Connected'
             );
 
-            // Update stats
+            // Update stats with null checks
             document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
             document.getElementById('todayAlerts').textContent = status.dailyAlerts || '0';
             document.getElementById('alertLimit').textContent = status.maxDailyAlerts || '5';
             
             // Update last update time
             if (status.lastUpdate) {
-                const date = new Date(status.lastUpdate);
-                document.getElementById('lastUpdate').textContent = date.toLocaleTimeString();
+                try {
+                    const date = new Date(status.lastUpdate);
+                    document.getElementById('lastUpdate').textContent = date.toLocaleTimeString();
+                } catch (e) {
+                    document.getElementById('lastUpdate').textContent = 'Just now';
+                }
             }
 
             // Update controls
@@ -951,22 +972,9 @@ Need more help? Check the deployment guide!`;
                 strategySelect.disabled = false;
             }
 
-            strategySelect.value = status.activeStrategy || 'Enhanced';
-
-            // Update system status
-            const systemStatus = document.getElementById('systemStatus');
-            if (status.isRunning) {
-                systemStatus.innerHTML = `
-                    <div class="empty-icon">⚡</div>
-                    <p>Trading bot is actively running with <strong>${status.activeStrategy}</strong> strategy.</p>
-                    <p>Monitoring market for signals... Sent ${status.dailyAlerts}/${status.maxDailyAlerts} alerts today.</p>
-                `;
-            } else {
-                systemStatus.innerHTML = `
-                    <div class="empty-icon">📊</div>
-                    <p>Trading bot is ready but not running.</p>
-                    <p>Click "Start Engine" to begin monitoring market signals.</p>
-                `;
+            // Update strategy selector
+            if (status.activeStrategy && strategySelect.value !== status.activeStrategy) {
+                strategySelect.value = status.activeStrategy;
             }
         }
 
@@ -976,51 +984,29 @@ Need more help? Check the deployment guide!`;
             const statusText = document.getElementById('statusText');
 
             indicator.className = `status-indicator status-${status}`;
-            
-            let color;
-            switch (status) {
-                case 'running':
-                    color = 'var(--success)';
-                    break;
-                case 'connecting':
-                    color = 'var(--warning)';
-                    break;
-                default:
-                    color = 'var(--error)';
-            }
-            
-            pulse.style.backgroundColor = color;
+            pulse.style.backgroundColor = status === 'running' ? 'var(--success)' : 'var(--error)';
             statusText.textContent = text;
         }
 
         function showNotification(message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+
             const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-                padding: 16px 24px;
-                border-radius: 12px;
-                color: white;
-                font-weight: 600;
-                max-width: 300px;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                background: ${type === 'success' ? 'var(--gradient-success)' : 
-                           type === 'error' ? 'var(--gradient-error)' : 'var(--gradient-primary)'};
-                box-shadow: var(--shadow);
-            `;
+            notification.className = `notification ${type}`;
             notification.textContent = message;
             
             document.body.appendChild(notification);
             
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 100);
+            // Show notification
+            requestAnimationFrame(() => {
+                notification.classList.add('show');
+            });
             
+            // Auto remove after 4 seconds
             setTimeout(() => {
-                notification.style.transform = 'translateX(100%)';
+                notification.classList.remove('show');
                 setTimeout(() => {
                     if (document.body.contains(notification)) {
                         document.body.removeChild(notification);
@@ -1030,77 +1016,33 @@ Need more help? Check the deployment guide!`;
         }
 
         function startPeriodicUpdate() {
-            setInterval(() => {
+            // Clear any existing interval
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            
+            // Update every 60 seconds to match API rate limiting
+            updateInterval = setInterval(() => {
                 if (gasUrl) {
                     updateStatus();
                 }
-            }, 30000); // Update every 30 seconds
+            }, 60000);
         }
 
-        function logDebug(message, data = null) {
-            if (debugMode) {
-                const debugContent = document.getElementById('debugContent');
-                const timestamp = new Date().toLocaleTimeString();
-                const logEntry = `[${timestamp}] ${message}${data ? ': ' + JSON.stringify(data, null, 2) : ''}\n`;
-                debugContent.textContent = logEntry + debugContent.textContent;
-                
-                // Keep only last 20 entries
-                const lines = debugContent.textContent.split('\n');
-                if (lines.length > 20) {
-                    debugContent.textContent = lines.slice(0, 20).join('\n');
-                }
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
             }
-            
-            console.log(message, data);
-        }
-
-        // PWA Installation prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            const installButton = document.createElement('button');
-            installButton.className = 'btn btn-secondary';
-            installButton.innerHTML = '<span>📱</span> Install App';
-            installButton.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 1000;
-                box-shadow: var(--shadow);
-            `;
-            
-            installButton.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    deferredPrompt = null;
-                    document.body.removeChild(installButton);
-                    
-                    if (outcome === 'accepted') {
-                        showNotification('App installed successfully!', 'success');
-                    }
-                }
-            });
-            
-            document.body.appendChild(installButton);
-            
-            // Auto-remove after 10 seconds
-            setTimeout(() => {
-                if (document.body.contains(installButton)) {
-                    installButton.style.opacity = '0';
-                    setTimeout(() => {
-                        if (document.body.contains(installButton)) {
-                            document.body.removeChild(installButton);
-                        }
-                    }, 300);
-                }
-            }, 10000);
         });
 
-        // Handle connection errors more gracefully
+        // Error handling for uncaught errors
+        window.addEventListener('error', (event) => {
+            console.error('Dashboard error:', event.error);
+            showNotification('Dashboard error occurred', 'error');
+        });
+
+        // Handle network errors gracefully
         window.addEventListener('online', () => {
             showNotification('Connection restored', 'success');
             if (gasUrl) {
@@ -1109,8 +1051,8 @@ Need more help? Check the deployment guide!`;
         });
 
         window.addEventListener('offline', () => {
-            updateStatusIndicator('stopped', 'Offline');
             showNotification('Connection lost', 'error');
+            updateStatusIndicator('stopped', 'Offline');
         });
     </script>
 </body>
