@@ -1315,3 +1315,315 @@
     </script>
 </body>
 </html>
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mitra Signal - Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- (style removed here for brevity) paste your CSS from previous file or keep as-is -->
+</head>
+<body>
+  <!-- Use your existing HTML markup (same as you uploaded). 
+       Only JS below is required to replace the previous JS block. -->
+  <!-- ... your HTML content (header, modals, controls) remains the same ... -->
+
+  <!-- Paste this <script> block at the end of your body (replace prior script) -->
+  <script>
+    // Minimal required JS (replace your existing script block with this)
+    let gasUrl = '';
+    let updateInterval = null;
+    let isUpdatingStrategy = false;
+    const memoryStorage = {};
+
+    function getStoredUrl() {
+      try { return localStorage.getItem('mitraGasUrl') || memoryStorage.gasUrl || ''; }
+      catch (e) { return memoryStorage.gasUrl || ''; }
+    }
+    function setStoredUrl(u) { try { localStorage.setItem('mitraGasUrl', u); } catch(e){} memoryStorage.gasUrl = u; }
+    function removeStoredUrl() { try { localStorage.removeItem('mitraGasUrl'); } catch(e){} delete memoryStorage.gasUrl; }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = getStoredUrl();
+      if (saved) {
+        gasUrl = saved;
+        document.getElementById('setupModal').style.display = 'none';
+        initializeDashboard();
+      } else {
+        document.getElementById('setupModal').style.display = 'flex';
+      }
+      // wire up change event to update description initially
+      updateStrategyDescription();
+    });
+
+    function saveGasUrl() {
+      const v = document.getElementById('gasUrlInput').value.trim();
+      if (!v || !v.includes('script.google.com')) { showNotification('Enter valid GAS URL','error'); return; }
+      gasUrl = v; setStoredUrl(v);
+      document.getElementById('setupModal').style.display = 'none';
+      initializeDashboard();
+    }
+
+    function showHelp(){ document.getElementById('helpModal').style.display = 'flex'; }
+    function hideHelp(){ document.getElementById('helpModal').style.display = 'none'; }
+
+    function initializeDashboard(){
+      updateStatusIndicator('stopped','Connecting...');
+      setupEventListeners();
+      testConnection();
+      startPeriodicUpdate();
+    }
+
+    function setupEventListeners() {
+      document.getElementById('startBtn').addEventListener('click', startEngine);
+      document.getElementById('stopBtn').addEventListener('click', stopEngine);
+      document.getElementById('manualScanBtn').addEventListener('click', runManualScan);
+      document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+      document.getElementById('strategySelect').addEventListener('change', handleStrategyChange);
+      document.getElementById('strategySelect').addEventListener('change', updateStrategyDescription);
+    }
+
+    async function makeRequest(action, data = {}) {
+      if (!gasUrl) { showNotification('No connection URL configured','error'); return null; }
+      try {
+        const res = await fetch(gasUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, ...data }),
+          mode: 'cors'
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error('HTTP ' + res.status + ': ' + text);
+        }
+        const json = await res.json();
+        return json;
+      } catch (e) {
+        console.error('makeRequest failed:', e);
+        showNotification('Connection failed: ' + (e.message || e.toString()), 'error');
+        return null;
+      }
+    }
+
+    async function testConnection() {
+      if (!gasUrl) return;
+      const btn = document.getElementById('testConnectionBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="loading"><div class="spinner"></div> Testing...</div>';
+      try {
+        const res = await fetch(gasUrl, { method: 'GET', mode: 'cors' });
+        const json = await res.json();
+        if (json && json.success) {
+          document.getElementById('connectionStatus').textContent = 'Connected';
+          updateDashboard(json.data);
+          showNotification('Connected to backend', 'success');
+        } else {
+          throw new Error('Invalid response');
+        }
+      } catch (e) {
+        console.error('testConnection error', e);
+        document.getElementById('connectionStatus').textContent = 'Failed';
+        showNotification('Connection failed: ' + (e.message || e.toString()), 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🧪</span> Test Connection';
+      }
+    }
+
+    async function startEngine() {
+      const strat = document.getElementById('strategySelect').value;
+      const btn = document.getElementById('startBtn');
+      btn.disabled = true; btn.innerHTML = '<div class="loading"><div class="spinner"></div> Starting...</div>';
+      const result = await makeRequest('start', { strategy: strat });
+      if (result && result.success) {
+        showNotification('Engine started with ' + strat, 'success');
+        // update UI
+        setTimeout(()=> updateStatus(), 1000);
+      } else {
+        showNotification('Start failed: ' + (result?.data||'Unknown'), 'error');
+      }
+      btn.disabled = false; btn.innerHTML = '<span>🚀</span> Start Engine';
+    }
+
+    async function stopEngine() {
+      const btn = document.getElementById('stopBtn');
+      btn.disabled = true; btn.innerHTML = '<div class="loading"><div class="spinner"></div> Stopping...</div>';
+      const result = await makeRequest('stop');
+      if (result && result.success) {
+        showNotification('Engine stopped', 'success');
+        setTimeout(()=> updateStatus(), 800);
+      } else {
+        showNotification('Stop failed: ' + (result?.data||'Unknown'), 'error');
+      }
+      btn.disabled = false; btn.innerHTML = '<span>⏹️</span> Stop Engine';
+    }
+
+    async function runManualScan() {
+      const strat = document.getElementById('strategySelect').value;
+      const btn = document.getElementById('manualScanBtn');
+      btn.disabled = true; btn.innerHTML = '<div class="loading"><div class="spinner"></div> Scanning...</div>';
+      const result = await makeRequest('manualScan', { strategy: strat });
+      if (result && result.success) {
+        showNotification('Manual scan completed', 'success');
+        updateStatus();
+      } else {
+        showNotification('Manual scan failed: ' + (result?.data||'Unknown'), 'error');
+      }
+      btn.disabled = false; btn.innerHTML = '<span>🔍</span> Run Manual Scan';
+    }
+
+    async function handleStrategyChange() {
+      if (isUpdatingStrategy) return;
+      isUpdatingStrategy = true;
+      const newStrategy = document.getElementById('strategySelect').value;
+      // get current status
+      const stat = await getCurrentStatus();
+      if (stat && stat.isRunning) {
+        const ok = confirm(`Engine is running with ${stat.activeStrategy}. Restart with ${newStrategy}?`);
+        if (!ok) {
+          // revert selection
+          document.getElementById('strategySelect').value = stat.activeStrategy || 'Enhanced';
+          isUpdatingStrategy = false;
+          return;
+        }
+        // stop then start with new strategy
+        const stopRes = await makeRequest('stop');
+        if (!stopRes || !stopRes.success) {
+          showNotification('Failed to stop engine for strategy change', 'error');
+          document.getElementById('strategySelect').value = stat.activeStrategy || 'Enhanced';
+          isUpdatingStrategy = false;
+          return;
+        }
+        // start with new strategy
+        const startRes = await makeRequest('start', { strategy: newStrategy });
+        if (!startRes || !startRes.success) {
+          showNotification('Failed to start engine with new strategy', 'error');
+          document.getElementById('strategySelect').value = stat.activeStrategy || 'Enhanced';
+        } else {
+          showNotification('Strategy switched to ' + newStrategy, 'success');
+        }
+        updateStatus();
+      } else {
+        // engine stopped - just change strategy preference
+        const changeRes = await makeRequest('changeStrategy', { strategy: newStrategy });
+        if (changeRes && changeRes.success) {
+          showNotification('Strategy updated', 'success');
+        } else {
+          showNotification('Strategy change failed', 'error');
+        }
+        updateStatus();
+      }
+      isUpdatingStrategy = false;
+    }
+
+    async function getCurrentStatus() {
+      if (!gasUrl) return null;
+      try {
+        const res = await fetch(gasUrl, { method: 'GET', mode: 'cors' });
+        const json = await res.json();
+        return json && json.success ? json.data : null;
+      } catch (e) { return null; }
+    }
+
+    async function updateStatus() {
+      if (!gasUrl) return;
+      try {
+        const res = await fetch(gasUrl, { method: 'GET', mode: 'cors' });
+        const json = await res.json();
+        if (json && json.success && json.data) updateDashboard(json.data);
+      } catch (e) { console.warn('updateStatus failed', e); }
+    }
+
+    function startPeriodicUpdate() {
+      if (updateInterval) clearInterval(updateInterval);
+      updateInterval = setInterval(()=> updateStatus(), 30000);
+      updateStatus(); // immediate
+    }
+
+    function updateDashboard(status) {
+      if (!status) return;
+      // status fields: isRunning, activeStrategy, dailyAlerts, maxDailyAlerts, lastUpdate, telegramConfigured, lastApiCall
+      document.getElementById('activeStrategy').textContent = status.activeStrategy || 'Enhanced';
+      document.getElementById('todayAlerts').textContent = status.dailyAlerts || 0;
+      document.getElementById('alertLimit').textContent = status.maxDailyAlerts || 5;
+      // lastUpdate
+      if (status.lastUpdate) {
+        const d = new Date(status.lastUpdate);
+        document.getElementById('lastUpdate').textContent = d.toLocaleString();
+      }
+      // engine buttons
+      const startBtn = document.getElementById('startBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const stratSelect = document.getElementById('strategySelect');
+      if (status.isRunning) {
+        startBtn.disabled = true; startBtn.innerHTML = '<span>✅</span> Engine Running';
+        stopBtn.disabled = false; stopBtn.innerHTML = '<span>⏹️</span> Stop Engine';
+        stratSelect.value = status.activeStrategy;
+      } else {
+        startBtn.disabled = false; startBtn.innerHTML = '<span>🚀</span> Start Engine';
+        stopBtn.disabled = true; stopBtn.innerHTML = '<span>⏹️</span> Stopped';
+      }
+      // telegram status
+      document.getElementById('telegramStatus').textContent = status.telegramConfigured ? 'Configured' : 'Config Needed';
+      document.getElementById('telegramStatus').style.color = status.telegramConfigured ? '#10b981' : '#f59e0b';
+      // api rate
+      if (status.lastApiCall && (Date.now() - status.lastApiCall) < 120000) {
+        document.getElementById('apiRateLimit').textContent = 'Limited';
+        document.getElementById('apiRateLimit').style.color = '#f59e0b';
+      } else {
+        document.getElementById('apiRateLimit').textContent = 'OK';
+        document.getElementById('apiRateLimit').style.color = '#10b981';
+      }
+      updateStatusIndicator(status.isRunning ? 'running' : 'connected', status.isRunning ? 'Running' : 'Connected');
+    }
+
+    function updateStrategyDescription() {
+      const s = document.getElementById('strategySelect').value;
+      const info = {
+        'Enhanced': 'Enhanced: Balanced approach with 5 max daily alerts, 75% min confidence, 2-6 hour timeframe',
+        'Ganu': 'Ganu: Conservative, 3 alerts, 80% min confidence',
+        'Scalping': 'Scalping: Aggressive, 8 alerts, 70% min confidence'
+      };
+      document.getElementById('strategyInfo').textContent = info[s] || '';
+    }
+
+    function updateStatusIndicator(status, text) {
+      const ind = document.getElementById('statusIndicator');
+      const pulse = document.getElementById('statusPulse');
+      const st = document.getElementById('statusText');
+      ind.className = 'status-indicator status-' + status;
+      if (status === 'running') pulse.style.backgroundColor = '#10b981';
+      else if (status === 'connected') pulse.style.backgroundColor = '#0ea5e9';
+      else pulse.style.backgroundColor = '#ef4444';
+      st.textContent = text;
+    }
+
+    function showNotification(msg, type='info') {
+      // create a toast similar to your previous implementation
+      const notif = document.createElement('div');
+      notif.className = 'notification ' + type;
+      notif.textContent = msg;
+      document.body.appendChild(notif);
+      requestAnimationFrame(()=> notif.classList.add('show'));
+      setTimeout(()=> { notif.classList.remove('show'); setTimeout(()=> notif.remove(),300); }, 4500);
+    }
+
+    // expose resetConnection to global
+    function resetConnection() { removeStoredUrl(); location.reload(); }
+
+    // Export functions to global scope (for buttons that call inline)
+    window.saveGasUrl = saveGasUrl;
+    window.showHelp = showHelp;
+    window.hideHelp = hideHelp;
+    window.resetConnection = resetConnection;
+    window.startEngine = startEngine;
+    window.stopEngine = stopEngine;
+    window.runManualScan = runManualScan;
+    window.testConnection = testConnection;
+    window.updateStrategyDescription = updateStrategyDescription;
+    window.handleStrategyChange = handleStrategyChange;
+  </script>
+</body>
+</html>
+
