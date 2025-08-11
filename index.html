@@ -1,124 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Mitra Signal - Trading Dashboard</title>
-    <style>
-        /* ===== full CSS preserved from your original file ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0b0f;
-            color: #ffffff;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header {
-            background: #1a1b23; border: 1px solid #374151; border-radius: 20px; padding: 24px;
-            margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
-        }
-        .logo { display:flex; align-items:center; gap:12px; }
-        .logo-icon {
-            width:40px; height:40px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius:12px;
-            display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; color:white;
-        }
-        .logo-text { font-size:24px; font-weight:700; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-        }
-        .status-indicator { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:50px; font-size:14px; font-weight:600; transition:all .3s ease; }
-        .status-running { background: rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.3); }
-        .status-stopped { background: rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
-        .status-connected { background: rgba(14,165,233,0.1); color:#0ea5e9; border:1px solid rgba(14,165,233,0.3); }
-        .pulse { width:8px; height:8px; border-radius:50%; animation:pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.2);} }
-
-        .modal { position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; }
-        .modal-content { background:#252730; border-radius:20px; padding:32px; max-width:500px; width:100%; border:1px solid #374151; }
-        .modal-title { font-size:24px; font-weight:700; margin-bottom:16px; text-align:center; }
-        .modal-description { color:#a1a8b7; margin-bottom:24px; text-align:center; line-height:1.6; }
-        .form-input { width:100%; background:#1a1b23; border:2px solid #374151; border-radius:12px; padding:16px; color:#fff; font-size:16px; margin-bottom:16px; transition:all .3s; }
-        .form-input:focus { outline:none; border-color:#00d4aa; box-shadow:0 0 0 3px rgba(0,212,170,0.1); }
-
-        .stats-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap:24px; margin-bottom:32px; }
-        .stat-card { background:#252730; border:1px solid #374151; border-radius:16px; padding:24px; transition:all .3s; }
-        .stat-card:hover { transform:translateY(-4px); box-shadow:0 4px 16px rgba(0,0,0,.3); border-color:#00d4aa; }
-        .stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-        .stat-title { font-size:14px; color:#a1a8b7; font-weight:500; }
-        .stat-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
-        .stat-value { font-size:32px; font-weight:700; margin-bottom:8px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .stat-description { font-size:12px; color:#6b7280; }
-
-        .control-panel { background:#252730; border:1px solid #374151; border-radius:20px; padding:32px; margin-bottom:32px; }
-        .control-title { font-size:24px; font-weight:700; margin-bottom:8px; }
-        .control-subtitle { color:#a1a8b7; font-size:16px; margin-bottom:32px; }
-        .control-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap:32px; }
-        .control-section { display:flex; flex-direction:column; gap:20px; }
-        .form-group { display:flex; flex-direction:column; gap:8px; }
-        .form-label { font-size:14px; font-weight:600; color:#a1a8b7; }
-        .form-select { background:#1a1b23; border:2px solid #374151; border-radius:12px; padding:12px 16px; color:#fff; font-size:16px; transition:all .3s; }
-        .form-select:focus { outline:none; border-color:#00d4aa; box-shadow:0 0 0 3px rgba(0,212,170,0.1); }
-
-        .btn { background:#1a1b23; border:2px solid #374151; border-radius:12px; padding:16px 24px; color:#fff; font-size:16px; font-weight:600; cursor:pointer; transition:all .3s; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
-        .btn-primary { background: linear-gradient(135deg,#10b981 0%,#059669 100%); border-color:#10b981; color:white; }
-        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(16,185,129,0.3); }
-        .btn-danger { background: linear-gradient(135deg,#ef4444 0%,#dc2626 100%); border-color:#ef4444; color:white; }
-        .btn-secondary { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-color:#0ea5e9; color:white; }
-
-        .loading { display:inline-flex; align-items:center; gap:8px; }
-        .spinner { width:16px; height:16px; border:2px solid transparent; border-top:2px solid currentColor; border-radius:50%; animation:spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .notification { position:fixed; top:20px; right:20px; z-index:10000; padding:16px 24px; border-radius:12px; color:white; font-weight:600; max-width:350px; transform:translateX(100%); transition:transform .3s ease; }
-        .notification.success { background:linear-gradient(135deg,#10b981 0%,#059669 100%); }
-        .notification.error { background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%); }
-        .notification.info { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
-        .notification.warning { background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%); }
-        .notification.show { transform: translateX(0); }
-
-        .system-status { background:#1a1b23; border-radius:16px; padding:24px; margin-top:24px; }
-        .status-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-top:16px; }
-        .status-item { background:#252730; padding:16px; border-radius:12px; border:1px solid #374151; }
-        .status-item-title { font-size:12px; color:#a1a8b7; margin-bottom:8px; font-weight:600; }
-        .status-item-value { font-size:16px; color:#fff; font-weight:600; }
-
-        .help-content { text-align:left; font-size:14px; line-height:1.6; margin-bottom:20px; }
-        .help-step { margin-bottom:12px; padding-left:20px; }
-        .help-code { background:#1a1b23; padding:8px 12px; border-radius:6px; font-family:monospace; font-size:12px; margin:8px 0; overflow-x:auto; }
-        .strategy-info { background:#1a1b23; border:1px solid #374151; border-radius:12px; padding:16px; margin-top:8px; font-size:12px; color:#a1a8b7; }
-        .telegram-config { background:#252730; border:1px solid #374151; border-radius:16px; padding:24px; margin-bottom:24px; }
-        @media (max-width:768px) {
-            .container { padding:16px; }
-            .header { flex-direction:column; text-align:center; }
-            .stats-grid { grid-template-columns:1fr; }
-            .control-grid { grid-template-columns:1fr; }
-            .modal-content { margin:10px; padding:24px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Mitra Signal Dashboard</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    padding: 20px;
+    background-color: #161b22;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  main {
+    padding: 20px;
+  }
+  .card {
+    background-color: #161b22;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    margin-top: 0;
+    font-size: 18px;
+  }
+  select, button {
+    padding: 8px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  select {
+    background-color: #21262d;
+    color: #c9d1d9;
+  }
+  button {
+    background-color: #238636;
+    color: white;
+    cursor: pointer;
+  }
+  button.stop {
+    background-color: #da3633;
+  }
+  button:hover {
+    opacity: 0.9;
+  }
+  .status {
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  .status span {
+    font-weight: bold;
+  }
+</style>
 </head>
 <body>
-    <!-- ======== Setup Modal (enter GAS Web App URL) ======== -->
-    <div class="modal" id="setupModal" style="display:none">
-        <div class="modal-content">
-            <h2 class="modal-title">🚀 Connect Mitra Signal Dashboard</h2>
-            <p class="modal-description">Enter your Google Apps Script Web App URL (deployed as Web App, Anyone access).</p>
-            <input type="url" id="gasUrlInput" class="form-input" placeholder="https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec" />
-            <div style="display:flex; gap:12px; margin-top:16px;">
-                <button class="btn btn-primary" onclick="saveGasUrl()" style="flex:1">Connect</button>
-                <button class="btn" onclick="showHelp()" style="flex:1">Help</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Help Modal -->
-    <div class="modal" id="helpModal" style="display:none">
-        <div class="modal-content">
-            <h2 class="modal-title">📖 Setup Instructions</h2>
-            <div class="help-content">
-                <div class="help-step"><strong>1.</strong> Open <a href="https://script.google.com" target="_blank" style="color:#667eea">Apps Script</a> and deploy the backend as a Web App.</div>
-                <div class="help-step"><strong>2.</strong> Use "Execute as: Me" and "Who has access: Anyone".</div>
-                <div class="help-step"><strong>3.</strong> Copy the Web App URL and paste it here.</div>
-                <div class="help-code">Example:<br>https://script.google.com/macros/s/AKfycbx.../exec</div>
-                <div class="help-step"><strong>⚠️ Telegram:</strong> Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Script Properties or directly in the script.</div>
-            </div>
+<header>Mitra Signal Dashboard</header>
+
+<main>
+  <div class="card">
+    <h2>Engine Control</h2>
+    <label for="strategy">Select Strategy:</label>
+    <select id="strategy">
+      <option value="Ganu">Ganu</option>
+      <option value="Enhanced">Enhanced</option>
+      <option value="Scalping">Scalping</option>
+    </select>
+    <br>
+    <button onclick="startEngine()">Start Engine</button>
+    <button class="stop" onclick="stopEngine()">Stop Engine</button>
+    <button onclick="manualScan()">Run Manual Scan</button>
+    <button onclick="sendTestMessage()">Send Telegram Test</button>
+    <div class="status" id="statusBox">Loading status...</div>
+  </div>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec";
+
+async function getStatus() {
+  try {
+    const res = await fetch(`${API_URL}?action=getStatus`);
+    const data = await res.json();
+    document.getElementById('statusBox').innerHTML =
+      `Engine: <span>${data.isRunning ? 'Running' : 'Stopped'}</span><br>
+      Strategy: <span>${data.activeStrategy}</span><br>
+      Telegram Configured: <span>${data.telegramConfigured ? 'Yes ✅' : 'No ❌'}</span><br>
+      Alerts Today: <span>${data.todayAlerts}/${data.alertLimit}</span>`;
+  } catch (err) {
+    document.getElementById('statusBox').innerText = "Error fetching status";
+  }
+}
+
+async function startEngine() {
+  const strategy = document.getElementById('strategy').value;
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "startEngine", strategy }),
+    headers: { "Content-Type": "application/json" }
+  });
+  getStatus();
+}
+
+async function stopEngine() {
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "stopEngine" }),
+    headers: { "Content-Type": "application/json" }
+  });
+  getStatus();
+}
+
+async function manualScan() {
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "manualScan" }),
+    headers: { "Content-Type": "application/json" }
+  });
+  alert("Manual scan triggered (check logs & sheet)");
+}
+
+async function sendTestMessage() {
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "sendTestMessage" }),
+    headers: { "Content-Type": "application/json" }
+  });
+  alert("Test message sent to Telegram");
+}
+
+// Auto-refresh every 30s
+getStatus();
+setInterval(getStatus, 30000);
+</script>
+
+</body>
+</html>
