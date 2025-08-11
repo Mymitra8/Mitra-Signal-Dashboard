@@ -1,177 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Mitra Signal - Trading Dashboard</title>
     <style>
-        /* Full CSS — same as your earlier long CSS (keeps the dashboard look) */
+        /* ===== full CSS preserved from your original file ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0b0f; color: #ffffff; line-height: 1.6; min-height: 100vh; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0b0f;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { background: #1a1b23; border: 1px solid #374151; border-radius: 20px; padding: 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-        .logo { display: flex; align-items: center; gap: 12px; }
-        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: white; }
-        .logo-text { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .status-indicator { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 50px; font-size: 14px; font-weight: 600; transition: all 0.3s ease; }
-        .status-running { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-stopped { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .status-connected { background: rgba(14, 165, 233, 0.1); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3); }
-        .pulse { width: 8px; height: 8px; border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
-        .modal-content { background: #252730; border-radius: 20px; padding: 32px; max-width: 700px; width: 100%; border: 1px solid #374151; }
-        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 16px; text-align: center; }
-        .modal-description { color: #a1a8b7; margin-bottom: 24px; text-align: center; line-height: 1.6; }
-        .form-input { width: 100%; background: #1a1b23; border: 2px solid #374151; border-radius: 12px; padding: 16px; color: #ffffff; font-size: 16px; margin-bottom: 16px; transition: all 0.3s ease; }
-        .form-input:focus { outline: none; border-color: #00d4aa; box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
-        .stat-card { background: #252730; border: 1px solid #374151; border-radius: 16px; padding: 24px; transition: all 0.3s ease; }
-        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); border-color: #00d4aa; }
-        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .stat-title { font-size: 14px; color: #a1a8b7; font-weight: 500; }
-        .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-        .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .stat-description { font-size: 12px; color: #6b7280; }
-        .control-panel { background: #252730; border: 1px solid #374151; border-radius: 20px; padding: 32px; margin-bottom: 32px; }
-        .control-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-        .control-subtitle { color: #a1a8b7; font-size: 16px; margin-bottom: 32px; }
-        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
-        .control-section { display: flex; flex-direction: column; gap: 20px; }
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
-        .form-label { font-size: 14px; font-weight: 600; color: #a1a8b7; }
-        .form-select { background: #1a1b23; border: 2px solid #374151; border-radius: 12px; padding: 12px 16px; color: #ffffff; font-size: 16px; transition: all 0.3s ease; }
-        .form-select:focus { outline: none; border-color: #00d4aa; box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1); }
-        .btn { background: #1a1b23; border: 2px solid #374151; border-radius: 12px; padding: 16px 24px; color: #ffffff; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
-        .btn-primary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #10b981; color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-color: #ef4444; color: white; }
-        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3); }
-        .btn-secondary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-color: #0ea5e9; color: white; }
-        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(14, 165, 233, 0.3); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-        .loading { display: inline-flex; align-items: center; gap: 8px; }
-        .spinner { width: 16px; height: 16px; border: 2px solid transparent; border-top: 2px solid currentColor; border-radius: 50%; animation: spin 1s linear infinite; }
+        .header {
+            background: #1a1b23; border: 1px solid #374151; border-radius: 20px; padding: 24px;
+            margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;
+        }
+        .logo { display:flex; align-items:center; gap:12px; }
+        .logo-icon {
+            width:40px; height:40px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius:12px;
+            display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold; color:white;
+        }
+        .logo-text { font-size:24px; font-weight:700; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+        }
+        .status-indicator { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:50px; font-size:14px; font-weight:600; transition:all .3s ease; }
+        .status-running { background: rgba(16,185,129,0.1); color:#10b981; border:1px solid rgba(16,185,129,0.3); }
+        .status-stopped { background: rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+        .status-connected { background: rgba(14,165,233,0.1); color:#0ea5e9; border:1px solid rgba(14,165,233,0.3); }
+        .pulse { width:8px; height:8px; border-radius:50%; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.2);} }
+
+        .modal { position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; }
+        .modal-content { background:#252730; border-radius:20px; padding:32px; max-width:500px; width:100%; border:1px solid #374151; }
+        .modal-title { font-size:24px; font-weight:700; margin-bottom:16px; text-align:center; }
+        .modal-description { color:#a1a8b7; margin-bottom:24px; text-align:center; line-height:1.6; }
+        .form-input { width:100%; background:#1a1b23; border:2px solid #374151; border-radius:12px; padding:16px; color:#fff; font-size:16px; margin-bottom:16px; transition:all .3s; }
+        .form-input:focus { outline:none; border-color:#00d4aa; box-shadow:0 0 0 3px rgba(0,212,170,0.1); }
+
+        .stats-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap:24px; margin-bottom:32px; }
+        .stat-card { background:#252730; border:1px solid #374151; border-radius:16px; padding:24px; transition:all .3s; }
+        .stat-card:hover { transform:translateY(-4px); box-shadow:0 4px 16px rgba(0,0,0,.3); border-color:#00d4aa; }
+        .stat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .stat-title { font-size:14px; color:#a1a8b7; font-weight:500; }
+        .stat-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+        .stat-value { font-size:32px; font-weight:700; margin-bottom:8px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .stat-description { font-size:12px; color:#6b7280; }
+
+        .control-panel { background:#252730; border:1px solid #374151; border-radius:20px; padding:32px; margin-bottom:32px; }
+        .control-title { font-size:24px; font-weight:700; margin-bottom:8px; }
+        .control-subtitle { color:#a1a8b7; font-size:16px; margin-bottom:32px; }
+        .control-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap:32px; }
+        .control-section { display:flex; flex-direction:column; gap:20px; }
+        .form-group { display:flex; flex-direction:column; gap:8px; }
+        .form-label { font-size:14px; font-weight:600; color:#a1a8b7; }
+        .form-select { background:#1a1b23; border:2px solid #374151; border-radius:12px; padding:12px 16px; color:#fff; font-size:16px; transition:all .3s; }
+        .form-select:focus { outline:none; border-color:#00d4aa; box-shadow:0 0 0 3px rgba(0,212,170,0.1); }
+
+        .btn { background:#1a1b23; border:2px solid #374151; border-radius:12px; padding:16px 24px; color:#fff; font-size:16px; font-weight:600; cursor:pointer; transition:all .3s; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
+        .btn-primary { background: linear-gradient(135deg,#10b981 0%,#059669 100%); border-color:#10b981; color:white; }
+        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(16,185,129,0.3); }
+        .btn-danger { background: linear-gradient(135deg,#ef4444 0%,#dc2626 100%); border-color:#ef4444; color:white; }
+        .btn-secondary { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-color:#0ea5e9; color:white; }
+
+        .loading { display:inline-flex; align-items:center; gap:8px; }
+        .spinner { width:16px; height:16px; border:2px solid transparent; border-top:2px solid currentColor; border-radius:50%; animation:spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .notification { position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 16px 24px; border-radius: 12px; color: white; font-weight: 600; max-width: 350px; transform: translateX(100%); transition: transform 0.3s ease; }
-        .notification.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .notification.error { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .notification.info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .notification.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        .notification { position:fixed; top:20px; right:20px; z-index:10000; padding:16px 24px; border-radius:12px; color:white; font-weight:600; max-width:350px; transform:translateX(100%); transition:transform .3s ease; }
+        .notification.success { background:linear-gradient(135deg,#10b981 0%,#059669 100%); }
+        .notification.error { background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%); }
+        .notification.info { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+        .notification.warning { background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%); }
         .notification.show { transform: translateX(0); }
-        .system-status { background: #1a1b23; border-radius: 16px; padding: 24px; margin-top: 24px; }
-        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; }
-        .status-item { background: #252730; padding: 16px; border-radius: 12px; border: 1px solid #374151; }
-        .status-item-title { font-size: 12px; color: #a1a8b7; margin-bottom: 8px; font-weight: 600; }
-        .status-item-value { font-size: 16px; color: #ffffff; font-weight: 600; }
-        .help-content { text-align: left; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-        .help-step { margin-bottom: 12px; padding-left: 20px; }
-        .help-code { background: #1a1b23; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 12px; margin: 8px 0; overflow-x: auto; }
-        .strategy-info { background: #1a1b23; border: 1px solid #374151; border-radius: 12px; padding: 16px; margin-top: 8px; font-size: 12px; color: #a1a8b7; }
-        .telegram-config { background: #252730; border: 1px solid #374151; border-radius: 16px; padding: 24px; margin-bottom: 24px; }
-        @media (max-width: 768px) {
-            .container { padding: 16px; }
-            .header { flex-direction: column; text-align: center; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .control-grid { grid-template-columns: 1fr; }
-            .modal-content { margin: 10px; padding: 24px; }
+
+        .system-status { background:#1a1b23; border-radius:16px; padding:24px; margin-top:24px; }
+        .status-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-top:16px; }
+        .status-item { background:#252730; padding:16px; border-radius:12px; border:1px solid #374151; }
+        .status-item-title { font-size:12px; color:#a1a8b7; margin-bottom:8px; font-weight:600; }
+        .status-item-value { font-size:16px; color:#fff; font-weight:600; }
+
+        .help-content { text-align:left; font-size:14px; line-height:1.6; margin-bottom:20px; }
+        .help-step { margin-bottom:12px; padding-left:20px; }
+        .help-code { background:#1a1b23; padding:8px 12px; border-radius:6px; font-family:monospace; font-size:12px; margin:8px 0; overflow-x:auto; }
+        .strategy-info { background:#1a1b23; border:1px solid #374151; border-radius:12px; padding:16px; margin-top:8px; font-size:12px; color:#a1a8b7; }
+        .telegram-config { background:#252730; border:1px solid #374151; border-radius:16px; padding:24px; margin-bottom:24px; }
+        @media (max-width:768px) {
+            .container { padding:16px; }
+            .header { flex-direction:column; text-align:center; }
+            .stats-grid { grid-template-columns:1fr; }
+            .control-grid { grid-template-columns:1fr; }
+            .modal-content { margin:10px; padding:24px; }
         }
     </style>
 </head>
 <body>
-    <!-- Modal (enter GAS URL) -->
-    <div class="modal" id="setupModal">
+    <!-- ======== Setup Modal (enter GAS Web App URL) ======== -->
+    <div class="modal" id="setupModal" style="display:none">
         <div class="modal-content">
-            <h2 class="modal-title">🚀 Connect Mitra Signal</h2>
-            <p class="modal-description">Paste your deployed Google Apps Script Web App URL (Web App deploy must be: Execute as Me, Access: Anyone)</p>
-            <input id="gasUrlInput" class="form-input" placeholder="https://script.google.com/macros/s/AKfy.../exec" value="">
-            <div style="display:flex; gap:12px; margin-top:12px;">
+            <h2 class="modal-title">🚀 Connect Mitra Signal Dashboard</h2>
+            <p class="modal-description">Enter your Google Apps Script Web App URL (deployed as Web App, Anyone access).</p>
+            <input type="url" id="gasUrlInput" class="form-input" placeholder="https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec" />
+            <div style="display:flex; gap:12px; margin-top:16px;">
                 <button class="btn btn-primary" onclick="saveGasUrl()" style="flex:1">Connect</button>
-                <button class="btn" onclick="closeSetup()" style="flex:1">Close</button>
+                <button class="btn" onclick="showHelp()" style="flex:1">Help</button>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <header class="header">
-            <div class="logo"><div class="logo-icon">M</div><div class="logo-text">Mitra Signal</div></div>
-            <div id="statusIndicator" class="status-indicator status-stopped"><div id="statusPulse" class="pulse" style="background:#ef4444"></div><span id="statusText">Not connected</span></div>
-        </header>
-
-        <div class="telegram-config" id="telegramCard">
-            <h3 style="margin-bottom: 16px; color: #f59e0b;">⚠️ Telegram Configuration</h3>
-            <p style="color:#a1a8b7">Make sure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set in Script Properties (and bot is added to the group).</p>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header"><span class="stat-title">Active Strategy</span><div class="stat-icon">📈</div></div>
-                <div class="stat-value" id="activeStrategy">Enhanced</div>
-                <div class="stat-description">Current trading strategy</div>
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal" style="display:none">
+        <div class="modal-content">
+            <h2 class="modal-title">📖 Setup Instructions</h2>
+            <div class="help-content">
+                <div class="help-step"><strong>1.</strong> Open <a href="https://script.google.com" target="_blank" style="color:#667eea">Apps Script</a> and deploy the backend as a Web App.</div>
+                <div class="help-step"><strong>2.</strong> Use "Execute as: Me" and "Who has access: Anyone".</div>
+                <div class="help-step"><strong>3.</strong> Copy the Web App URL and paste it here.</div>
+                <div class="help-code">Example:<br>https://script.google.com/macros/s/AKfycbx.../exec</div>
+                <div class="help-step"><strong>⚠️ Telegram:</strong> Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Script Properties or directly in the script.</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-header"><span class="stat-title">Today's Alerts</span><div class="stat-icon">🚨</div></div>
-                <div class="stat-value" id="todayAlerts">0</div>
-                <div class="stat-description">Signals sent today</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header"><span class="stat-title">Alert Limit</span><div class="stat-icon">⚡</div></div>
-                <div class="stat-value" id="alertLimit">5</div>
-                <div class="stat-description">Daily maximum alerts</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header"><span class="stat-title">Last Update</span><div class="stat-icon">🕒</div></div>
-                <div class="stat-value" id="lastUpdate">Never</div>
-                <div class="stat-description">Engine last activity</div>
-            </div>
-        </div>
-
-        <div class="control-panel">
-            <h2 class="control-title">Engine Control</h2>
-            <p class="control-subtitle">Manage the trading bot</p>
-            <div class="control-grid">
-                <div class="control-section">
-                    <div class="form-group">
-                        <label class="form-label">Trading Strategy</label>
-                        <select id="strategySelect" class="form-select">
-                            <option value="Enhanced">Enhanced Multi-Strategy</option>
-                            <option value="Ganu">Ganu Strategy (Conservative)</option>
-                            <option value="Scalping">Quick Scalp (Aggressive)</option>
-                        </select>
-                        <div id="strategyInfo" class="strategy-info">Enhanced: Balanced approach with 5 max daily alerts, 75% min confidence</div>
-                    </div>
-                    <button id="startBtn" class="btn btn-primary">🚀 Start Engine</button>
-                    <button id="stopBtn" class="btn btn-danger" disabled>⏹️ Stop Engine</button>
-                </div>
-
-                <div class="control-section">
-                    <button id="manualScanBtn" class="btn btn-secondary">🔍 Run Manual Scan</button>
-                    <button id="testConnectionBtn" class="btn">🧪 Test Connection</button>
-                    <button class="btn" id="openSheetBtn">📊 View Sheet</button>
-                    <button class="btn" onclick="resetConnection()">⚙️ Change URL</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="control-panel system-status">
-            <h2 class="control-title">System Status</h2>
-            <div class="status-grid">
-                <div class="status-item"><div class="status-item-title">Connection Status</div><div class="status-item-value" id="connectionStatus">Disconnected</div></div>
-                <div class="status-item"><div class="status-item-title">Last API Call</div><div class="status-item-value" id="lastApiCall">Never</div></div>
-                <div class="status-item"><div class="status-item-title">Sheet Access</div><div class="status-item-value" id="sheetAccess">Unknown</div></div>
-                <div class="status-item"><div class="status-item-title">Telegram Status</div><div class="status-item-value" id="telegramStatus">Check Config</div></div>
-                <div class="status-item"><div class="status-item-title">API Rate Limit</div><div class="status-item-value" id="apiRateLimit">OK</div></div>
-                <div class="status-item"><div class="status-item-title">Engine Triggers</div><div class="status-item-value" id="engineTriggers">0</div></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Full dashboard JS — matches the GAS backend exactly
-        let gasUrl = 'https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec';
-        let updateInterval = null;
-        let isUpdatingStrategy = false;
-        const memoryStorage = {};
-
-        function getStoredUrl() {
-            try { return localStorage.getItem('mitraGasUrl') ||
