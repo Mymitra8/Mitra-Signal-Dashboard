@@ -1,158 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Mitra Trading Dashboard</title>
+<meta charset="utf-8" />
+<title>Mitra Trading Dashboard (final)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; }
-    .tabs { display: flex; background: #222; }
-    .tab { padding: 12px 20px; cursor: pointer; color: #aaa; }
-    .tab.active { background: #333; color: #fff; }
-    .tab-content { display: none; padding: 20px; }
-    .tab-content.active { display: block; }
-    button { padding: 8px 14px; margin: 5px; background: #28a745; color: #fff; border: none; cursor: pointer; }
-    button.stop { background: #dc3545; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { padding: 8px; border: 1px solid #444; text-align: left; }
-    th { background: #333; }
-    tr:nth-child(even) { background: #222; }
-    iframe { border: none; width: 100%; height: 400px; margin-top: 15px; }
+  body { font-family: Inter, Arial, sans-serif; background:#0b0c0f; color:#e6eef6; margin:0; }
+  .tabs { display:flex; background:#111; border-bottom:1px solid #222; }
+  .tab { padding:14px 18px; cursor:pointer; color:#9aa6b2; }
+  .tab.active { color:#fff; background:#0f1720; }
+  .container { padding:18px; }
+  .card { background:#0f1720; padding:14px; border-radius:10px; margin-bottom:16px; border:1px solid #1f2937; }
+  button { background:#0ea5e9; color:#042028; padding:8px 12px; border:none; border-radius:8px; cursor:pointer; margin-right:8px; }
+  button.stop { background:#ef4444; color:#fff; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
+  th,td { padding:8px; border-bottom:1px solid #111; text-align:left; color:#cfe7ff; }
+  thead th { color:#9aa6b2; font-weight:600; }
+  .level-INFO { color:#10b981; }
+  .level-ERROR { color:#f97316; }
+  .coin-link { color:#60a5fa; cursor:pointer; text-decoration:underline; }
+  #live-chart { width:100%; height:420px; border:0; margin-top:14px; }
 </style>
 </head>
 <body>
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">Dashboard</div>
+    <div class="tab" data-tab="diagnostics">Diagnostics</div>
+    <div class="tab" data-tab="tradealerts">Trade Alerts</div>
+  </div>
 
-<div class="tabs">
-    <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
-    <div class="tab" onclick="showTab('diagnostics')">Diagnostics</div>
-    <div class="tab" onclick="showTab('tradeAlerts')">Trade Alerts</div>
-</div>
+  <div class="container">
+    <div id="dashboard" class="card tab-pane">
+      <h3>Status & Controls</h3>
+      <div id="statusBox" style="margin-bottom:10px;">Loading...</div>
 
-<div id="dashboard" class="tab-content active">
-    <h2>Status</h2>
-    <p><strong>Engine:</strong> <span id="status-engine">Loading...</span></p>
-    <p><strong>Strategy:</strong> <span id="status-strategy">Loading...</span></p>
-    <p><strong>Alerts Today:</strong> <span id="status-alerts">Loading...</span> / <span id="status-limit">Loading...</span></p>
-    <p><strong>Telegram:</strong> <span id="status-telegram">Loading...</span></p>
+      <div style="margin-bottom:12px;">
+        <select id="strategySelect">
+          <option value="Enhanced">Enhanced</option>
+          <option value="Ganu">Ganu</option>
+          <option value="Scalping">Scalping</option>
+        </select>
+        <button id="startBtn">Start Engine</button>
+        <button id="stopBtn" class="stop">Stop Engine</button>
+        <button id="testBtn">Send Telegram Test</button>
+        <button id="scanBtn">Manual Scan</button>
+      </div>
+    </div>
 
-    <h3>Controls</h3>
-    <select id="strategy-select">
-        <option value="Enhanced">Enhanced</option>
-        <option value="Ganu">Ganu</option>
-        <option value="Scalping">Scalping</option>
-    </select>
-    <button onclick="startEngine()">Start Engine</button>
-    <button class="stop" onclick="stopEngine()">Stop Engine</button>
-    <button onclick="sendTest()">Send Test Telegram</button>
-</div>
+    <div id="diagnostics" class="card tab-pane" style="display:none;">
+      <h3>Diagnostics (last 50)</h3>
+      <table>
+        <thead><tr><th>Time</th><th>Level</th><th>Message</th></tr></thead>
+        <tbody id="diagBody"><tr><td colspan="3">Loading...</td></tr></tbody>
+      </table>
+    </div>
 
-<div id="diagnostics" class="tab-content">
-    <h2>Diagnostics Log (Last 50)</h2>
-    <table>
-        <thead>
-            <tr><th>Time</th><th>Level</th><th>Message</th></tr>
-        </thead>
-        <tbody id="diagnostics-body"></tbody>
-    </table>
-</div>
-
-<div id="tradeAlerts" class="tab-content">
-    <h2>Recent Trade Alerts</h2>
-    <table>
-        <thead>
-            <tr><th>Time</th><th>Coin</th><th>Symbol</th><th>Price</th><th>Confidence</th></tr>
-        </thead>
-        <tbody id="alerts-body"></tbody>
-    </table>
-    <div id="chart-container"></div>
-</div>
+    <div id="tradealerts" class="card tab-pane" style="display:none;">
+      <h3>Recent Trade Alerts</h3>
+      <table>
+        <thead><tr><th>Time</th><th>Symbol</th><th>Coin</th><th>Price</th><th>Confidence</th></tr></thead>
+        <tbody id="alertsBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+      </table>
+      <div id="chartArea">
+        <h4 id="chartTitle">Live Chart</h4>
+        <iframe id="live-chart" src=""></iframe>
+      </div>
+    </div>
+  </div>
 
 <script>
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec";
+  // Replace this with your deployed web app URL (the script above includes the same URL by default)
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec";
 
-function showTab(id) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-    document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
-    document.getElementById(id).classList.add('active');
-}
-
-async function fetchStatus() {
-    const res = await fetch(`${WEB_APP_URL}?action=getStatus`);
-    const data = await res.json();
-    document.getElementById('status-engine').textContent = data.isRunning ? "Running" : "Stopped";
-    document.getElementById('status-strategy').textContent = data.activeStrategy;
-    document.getElementById('status-alerts').textContent = data.todayAlerts;
-    document.getElementById('status-limit').textContent = data.alertLimit;
-    document.getElementById('status-telegram').textContent = data.telegramConfigured ? "Configured" : "Not Configured";
-}
-
-async function fetchDiagnostics() {
-    const res = await fetch(`${WEB_APP_URL}?action=getDiagnostics`);
-    const data = await res.json();
-    const tbody = document.getElementById('diagnostics-body');
-    tbody.innerHTML = "";
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.time}</td><td>${row.level}</td><td>${row.message}</td>`;
-        tbody.appendChild(tr);
+  // JSONP helper
+  function jsonpCall(action, params = {}) {
+    return new Promise((resolve, reject) => {
+      const cbName = 'cb_' + Math.random().toString(36).slice(2,10);
+      window[cbName] = function(res) {
+        try { resolve(res); } finally { cleanup(); }
+      };
+      function cleanup() {
+        delete window[cbName];
+        const s = document.getElementById(cbName);
+        if (s) s.remove();
+      }
+      const url = new URL(WEB_APP_URL);
+      url.searchParams.set('action', action);
+      url.searchParams.set('callback', cbName);
+      Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+      const script = document.createElement('script');
+      script.src = url.toString();
+      script.id = cbName;
+      script.onerror = function(e){ cleanup(); reject(new Error('JSONP load error')); };
+      document.head.appendChild(script);
     });
-}
+  }
 
-async function fetchTradeAlerts() {
-    const res = await fetch(`${WEB_APP_URL}?action=getTradeAlerts`);
-    const data = await res.json();
-    const tbody = document.getElementById('alerts-body');
-    tbody.innerHTML = "";
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.time}</td><td>${row.coin}</td><td>${row.symbol}</td><td>${row.price}</td><td>${row.confidence}</td>`;
-        tr.addEventListener('click', () => showChart(row.symbol));
-        tbody.appendChild(tr);
+  // UI bindings / tab handling
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.getAttribute('data-tab');
+      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+      document.getElementById(tab).style.display = 'block';
+      // lazy refresh when switching
+      if (tab === 'diagnostics') loadDiagnostics();
+      if (tab === 'tradealerts') loadTradeAlerts();
+      if (tab === 'dashboard') loadStatus();
     });
-}
+  });
 
-function showChart(symbol) {
+  // Actions
+  document.getElementById('startBtn').addEventListener('click', async () => {
+    const strategy = document.getElementById('strategySelect').value;
+    await jsonpCall('startEngine', { strategy });
+    setTimeout(loadStatus, 800);
+  });
+  document.getElementById('stopBtn').addEventListener('click', async () => {
+    await jsonpCall('stopEngine');
+    setTimeout(loadStatus, 800);
+  });
+  document.getElementById('testBtn').addEventListener('click', async () => {
+    await jsonpCall('sendTestMessage');
+    alert('Test requested — check Diagnostics for result');
+  });
+  document.getElementById('scanBtn').addEventListener('click', async () => {
+    await jsonpCall('manualScan');
+    alert('Manual scan requested — check Diagnostics & Trade_Alerts');
+    setTimeout(() => { loadTradeAlerts(); loadDiagnostics(); }, 2000);
+  });
+
+  // Loaders
+  async function loadStatus() {
+    try {
+      const res = await jsonpCall('getStatus');
+      const data = res && res.data ? res.data : (res || {});
+      document.getElementById('statusBox').innerHTML = `
+        <div><strong>Running:</strong> ${data.isRunning ? '✅ Running' : '⛔ Stopped'}</div>
+        <div><strong>Strategy:</strong> ${data.activeStrategy || 'Unknown'}</div>
+        <div><strong>Alerts today:</strong> ${data.todayAlerts || 0} / ${data.alertLimit || '-'}</div>
+        <div><strong>Telegram:</strong> ${data.telegramConfigured ? '✅ configured' : '❗ not configured'}</div>
+      `;
+      // sync strategy selector
+      if (data.activeStrategy) document.getElementById('strategySelect').value = data.activeStrategy;
+    } catch (err) {
+      document.getElementById('statusBox').textContent = 'Failed to load status';
+    }
+  }
+
+  async function loadDiagnostics() {
+    try {
+      const res = await jsonpCall('getDiagnostics');
+      const logs = (res && res.data) ? res.data : [];
+      const tbody = document.getElementById('diagBody');
+      tbody.innerHTML = '';
+      if (!logs.length) {
+        tbody.innerHTML = '<tr><td colspan="3">No logs</td></tr>';
+        return;
+      }
+      logs.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${new Date(row.time).toLocaleString()}</td><td class="level-${row.level}">${row.level}</td><td>${row.message}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      document.getElementById('diagBody').innerHTML = '<tr><td colspan="3">Error loading logs</td></tr>';
+    }
+  }
+
+  async function loadTradeAlerts() {
+    try {
+      const res = await jsonpCall('getTradeAlerts');
+      const items = (res && res.data) ? res.data : [];
+      const tbody = document.getElementById('alertsBody');
+      tbody.innerHTML = '';
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5">No trade alerts</td></tr>';
+        return;
+      }
+      items.forEach(row => {
+        const tr = document.createElement('tr');
+        const sym = row.symbol || row.coin || '';
+        tr.innerHTML = `<td>${new Date(row.time).toLocaleString()}</td>
+                        <td><span class="coin-link" onclick="showChart('${sym}')">${sym}</span></td>
+                        <td>${row.coin || ''}</td>
+                        <td>${row.price || ''}</td>
+                        <td>${row.confidence || ''}</td>`;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      document.getElementById('alertsBody').innerHTML = '<tr><td colspan="5">Error loading alerts</td></tr>';
+    }
+  }
+
+  function showChart(symbol) {
     if (!symbol) return;
-    document.getElementById('chart-container').innerHTML = `
-        <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE:${symbol.toUpperCase()}USDT&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hidevolume=0&allow_symbol_change=1" allowtransparency="true" scrolling="no"></iframe>
-    `;
-}
+    const upper = symbol.toUpperCase();
+    // Use TradingView symbol => BINANCE:SYMBOLUSDT; adjust exchange if needed
+    const src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${upper}USDT&interval=15&hidesidetoolbar=1&symboledit=1`;
+    document.getElementById('live-chart').src = src;
+    document.getElementById('chartTitle').textContent = `Live Chart — ${upper}`;
+    // switch to Trade Alerts tab if not visible
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    document.querySelector('.tab[data-tab="tradealerts"]').classList.add('active');
+    document.getElementById('tradealerts').style.display = 'block';
+  }
 
-async function startEngine() {
-    const strategy = document.getElementById('strategy-select').value;
-    await fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "startEngine", strategy }),
-        headers: { "Content-Type": "application/json" }
-    });
-    fetchStatus();
-}
+  // auto-refresh
+  setInterval(loadStatus, 30000);
+  setInterval(loadDiagnostics, 60000);
+  setInterval(loadTradeAlerts, 60000);
 
-async function stopEngine() {
-    await fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "stopEngine" }),
-        headers: { "Content-Type": "application/json" }
-    });
-    fetchStatus();
-}
-
-async function sendTest() {
-    await fetch(WEB_APP_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "sendTestMessage" }),
-        headers: { "Content-Type": "application/json" }
-    });
-}
-
-setInterval(fetchStatus, 30000);
-setInterval(fetchDiagnostics, 60000);
-setInterval(fetchTradeAlerts, 60000);
-
-fetchStatus();
-fetchDiagnostics();
-fetchTradeAlerts();
+  // initial load
+  loadStatus();
+  loadDiagnostics();
+  loadTradeAlerts();
 </script>
-
 </body>
 </html>
