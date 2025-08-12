@@ -5,49 +5,56 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Mitra Signal — Dashboard</title>
 <style>
-  :root{--bg:#0b0c10;--card:#0f1720;--accent:#60a5fa;--muted:#98a8b6;--success:#10b981;--danger:#ef4444}
-  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6eef6}
-  .app{max-width:1200px;margin:18px auto;padding:18px}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-  .logo{display:flex;align-items:center;gap:12px}
-  .logo-box{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700}
-  h1{font-size:18px;margin:0}
-  .tabs{display:flex;gap:8px;margin-top:18px}
-  .tab{padding:10px 14px;border-radius:10px;background:var(--card);cursor:pointer;color:var(--muted)}
-  .tab.active{background:linear-gradient(135deg,#0f1720,#111827);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-  .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-  .full{grid-column:1/-1}
-  .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-  .value{font-size:20px;font-weight:700}
-  .controls{display:flex;gap:8px;flex-wrap:wrap}
-  select,button{padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#e6eef6}
-  button.primary{background:var(--accent);color:#042028;font-weight:700}
-  button.danger{background:var(--danger);color:#fff}
-  table{width:100%;border-collapse:collapse;margin-top:10px}
-  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
-  thead th{color:var(--muted);font-weight:600}
-  .coin-link{color:var(--accent);cursor:pointer;text-decoration:underline}
-  .small{font-size:12px;color:var(--muted)}
-  iframe{width:100%;height:420px;border-radius:8px;border:0;margin-top:12px}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+:root{
+  --bg:#0a0b0f; --card:#0f1720; --muted:#94a3b8; --accent:#60a5fa; --success:#10b981; --warn:#f59e0b; --danger:#ef4444;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#eaf2ff}
+.app{max-width:1200px;margin:18px auto;padding:18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:800}
+h1{font-size:18px;margin:0}
+.tabs{display:flex;gap:8px;margin-top:18px}
+.tab{padding:10px 14px;border-radius:10px;background:var(--card);cursor:pointer;color:var(--muted)}
+.tab.active{background:linear-gradient(180deg,#0f1720,#0b1220);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.full{grid-column:1/-1}
+.label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.value{font-size:20px;font-weight:700}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+select,button{padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.02);color:#eaf2ff}
+button.primary{background:var(--accent);color:#06202a;font-weight:700}
+button.warn{background:var(--warn);color:#071117}
+button.danger{background:var(--danger);color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
+thead th{color:var(--muted);font-weight:600}
+.coin-link{color:var(--accent);cursor:pointer;text-decoration:underline}
+.small{font-size:12px;color:var(--muted)}
+iframe{width:100%;height:420px;border-radius:8px;border:0;margin-top:12px}
+.timeframe-btn{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:transparent;color:var(--muted)}
+.timeframe-btn.active{background:rgba(96,165,250,0.12);color:#fff;border-color:rgba(96,165,250,0.22)}
+@media(max-width:900px){ .grid{grid-template-columns:1fr} }
+.notification{position:fixed;top:18px;right:18px;padding:12px 16px;border-radius:10px;background:#111;color:#fff;z-index:9999}
 </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <div class="logo">
-        <div class="logo-box">M</div>
+      <div class="brand">
+        <div class="logo">M</div>
         <div>
-          <h1>Mitra Signal — Trading Dashboard</h1>
-          <div class="small">Live strategy control • Diagnostics • Alerts • Live chart</div>
+          <h1>Mitra Signal — Crypto Dashboard</h1>
+          <div class="small">Real-time control • Diagnostics • Trade Alerts</div>
         </div>
       </div>
-      <div class="small">Web App: <span id="webUrlLabel"></span></div>
+      <div class="small">Web App: <span id="webUrl"></span></div>
     </header>
 
     <div class="tabs" role="tablist">
-      <div class="tab active" data-tab="panel">Dashboard</div>
+      <div class="tab active" data-tab="dash">Dashboard</div>
       <div class="tab" data-tab="alerts">Trade Alerts</div>
       <div class="tab" data-tab="diag">Diagnostics</div>
     </div>
@@ -89,181 +96,214 @@
           </div>
           <div style="text-align:right">
             <div class="label">Last API</div>
-            <div id="lastApiCall" class="small">Never</div>
+            <div id="lastApi" class="small">Never</div>
             <div id="telegramStatus" class="small">Telegram: checking…</div>
+            <div id="cacheStatus" class="small"></div>
           </div>
         </div>
       </div>
 
-      <div id="panel" class="card full tab-pane">
+      <div id="dash" class="card full tab-pane">
         <h3 style="margin:0 0 8px 0">Overview</h3>
-        <div class="small">Use controls to manage the engine. Alerts will appear in Trade Alerts tab and will be logged to the Google Sheet.</div>
+        <div class="small">Use controls to manage the engine. Alerts are logged to the Google Sheet and sent to Telegram.</div>
       </div>
 
       <div id="alerts" class="card full tab-pane" style="display:none">
         <h3 style="margin:0 0 8px 0">Recent Trade Alerts</h3>
         <table>
-          <thead>
-            <tr><th>Time</th><th>Symbol</th><th>Coin</th><th>Price</th><th>Confidence</th></tr>
-          </thead>
+          <thead><tr><th>Time</th><th>Symbol</th><th>Coin</th><th>Price</th><th>Confidence</th></tr></thead>
           <tbody id="alertsBody"><tr><td colspan="5">Loading…</td></tr></tbody>
         </table>
 
-        <div id="chartWrap">
-          <h4 id="chartTitle">Live Chart</h4>
-          <iframe id="chartFrame" src=""></iframe>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
+          <div class="small">Chart timeframe:</div>
+          <button class="timeframe-btn" data-interval="5" id="tf5">5m</button>
+          <button class="timeframe-btn active" data-interval="15" id="tf15">15m</button>
+          <button class="timeframe-btn" data-interval="60" id="tf60">1h</button>
+          <button class="timeframe-btn" data-interval="D" id="tfD">1D</button>
         </div>
+
+        <h4 id="chartTitle" style="margin-top:12px">Live Chart</h4>
+        <iframe id="tvFrame" src=""></iframe>
       </div>
 
       <div id="diag" class="card full tab-pane" style="display:none">
-        <h3 style="margin:0 0 8px 0">Diagnostics (last 50)</h3>
+        <h3 style="margin:0 0 8px 0">Diagnostics</h3>
+        <div class="small">Last 50 diagnostic log rows.</div>
         <table>
           <thead><tr><th>Time</th><th>Level</th><th>Message</th></tr></thead>
           <tbody id="diagBody"><tr><td colspan="3">Loading…</td></tr></tbody>
         </table>
+
+        <h4 style="margin-top:12px">Quick debug text</h4>
+        <pre id="diagText" style="background:#071126;padding:12px;border-radius:8px;color:#bcd4ff">Loading…</pre>
       </div>
     </div>
   </div>
 
 <script>
-  // Replace WEB_APP_URL if your deployed Apps Script URL differs
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec";
-  document.getElementById('webUrlLabel').textContent = WEB_APP_URL;
+/* CONFIG */
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec";
 
-  // JSONP helper
-  function jsonp(action, params = {}) {
-    return new Promise((resolve, reject) => {
-      const cb = 'cb_' + Math.random().toString(36).slice(2,9);
-      window[cb] = function(res) { try { resolve(res); } finally { cleanup(); } };
-      function cleanup() { delete window[cb]; const el = document.getElementById(cb); if (el) el.remove(); }
-      const url = new URL(WEB_APP_URL);
-      url.searchParams.set('action', action);
-      url.searchParams.set('callback', cb);
-      Object.keys(params||{}).forEach(k => url.searchParams.set(k, params[k]));
-      const s = document.createElement('script'); s.src = url.toString(); s.id = cb;
-      s.onerror = () => { cleanup(); reject(new Error('JSONP load failed')); };
-      document.head.appendChild(s);
-    });
-  }
-
-  // Tabs
-  document.querySelectorAll('.tab').forEach(t => {
-    t.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-      const target = t.getAttribute('data-tab');
-      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-      document.getElementById(target).style.display = 'block';
-      if (target === 'alerts') loadAlerts();
-      if (target === 'diag') loadDiagnostics();
-      if (target === 'panel') loadStatus();
-    });
+/* JSONP helper */
+function jsonp(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Math.random().toString(36).slice(2,9);
+    window[cb] = function(res){ try{ resolve(res); } finally { cleanup(); } };
+    function cleanup(){ try{ delete window[cb]; } catch(e){} const el = document.getElementById(cb); if(el) el.remove(); }
+    const url = new URL(WEB_APP_URL);
+    url.searchParams.set('action', action);
+    url.searchParams.set('callback', cb);
+    Object.keys(params||{}).forEach(k => url.searchParams.set(k, params[k]));
+    const s = document.createElement('script'); s.src = url.toString(); s.id = cb;
+    s.onerror = () => { cleanup(); reject(new Error('JSONP failed')); };
+    document.head.appendChild(s);
   });
+}
 
-  // Controls
-  document.getElementById('startBtn').addEventListener('click', async () => {
-    const strategy = document.getElementById('strategySelect').value;
-    await jsonp('startEngine', { strategy });
-    alert('Start requested — check Diagnostics for confirmation');
-    setTimeout(loadStatus, 1000);
-  });
-  document.getElementById('stopBtn').addEventListener('click', async () => {
-    await jsonp('stopEngine');
-    setTimeout(loadStatus, 1000);
-    alert('Stop requested');
-  });
-  document.getElementById('manualBtn').addEventListener('click', async () => {
-    await jsonp('manualScan');
-    alert('Manual scan requested — check Diagnostics & Trade Alerts');
-    setTimeout(()=>{ loadAlerts(); loadDiagnostics(); }, 1500);
-  });
-  document.getElementById('testBtn').addEventListener('click', async () => {
-    await jsonp('sendTestMessage');
-    alert('Telegram test requested — check Diagnostics');
-  });
-
-  // Loaders
-  async function loadStatus() {
-    try {
-      const res = await jsonp('getStatus');
-      if (!res || !res.success || !res.data) return;
-      const d = res.data;
-      document.getElementById('engineStatus').textContent = d.isRunning ? '✅ Running' : '⛔ Stopped';
-      document.getElementById('engineSub').textContent = 'Last update: ' + (d.lastUpdate || new Date().toLocaleString());
-      document.getElementById('activeStrategy').textContent = d.activeStrategy || '-';
-      document.getElementById('todayAlerts').textContent = d.todayAlerts || 0;
-      document.getElementById('alertLimit').textContent = d.alertLimit || '-';
-      document.getElementById('strategySelect').value = d.activeStrategy || 'Enhanced';
-      document.getElementById('telegramStatus').textContent = d.telegramConfigured ? 'Telegram: configured' : 'Telegram: not configured';
-      if (d.lastApiCall && d.lastApiCall > 0) {
-        document.getElementById('lastApiCall').textContent = new Date(d.lastApiCall).toLocaleString();
-      } else {
-        document.getElementById('lastApiCall').textContent = 'Never';
-      }
-    } catch (err) {
-      console.error('loadStatus', err);
-    }
-  }
-
-  async function loadDiagnostics() {
-    try {
-      const res = await jsonp('getDiagnostics');
-      const rows = (res && res.success && res.data) ? res.data : [];
-      const tbody = document.getElementById('diagBody'); tbody.innerHTML = '';
-      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="3">No logs</td></tr>'; return; }
-      rows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td><td class="level-${r.level}">${r.level}</td><td>${r.message}</td>`;
-        tbody.appendChild(tr);
-      });
-    } catch (err) {
-      document.getElementById('diagBody').innerHTML = '<tr><td colspan="3">Error loading logs</td></tr>';
-      console.error('loadDiagnostics', err);
-    }
-  }
-
-  async function loadAlerts() {
-    try {
-      const res = await jsonp('getTradeAlerts');
-      const rows = (res && res.success && res.data) ? res.data : [];
-      const tbody = document.getElementById('alertsBody'); tbody.innerHTML = '';
-      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5">No trade alerts</td></tr>'; return; }
-      rows.forEach(r => {
-        const sym = (r.symbol || r.coin || '').toUpperCase();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td>
-                        <td><span class="coin-link" onclick="showChart('${sym}')">${sym}</span></td>
-                        <td>${r.coin || ''}</td>
-                        <td>${r.price || ''}</td>
-                        <td>${r.confidence || ''}</td>`;
-        tbody.appendChild(tr);
-      });
-    } catch (err) {
-      document.getElementById('alertsBody').innerHTML = '<tr><td colspan="5">Error loading alerts</td></tr>';
-      console.error('loadAlerts', err);
-    }
-  }
-
-  window.showChart = function(symbol) {
-    if (!symbol) return;
-    const upper = symbol.toUpperCase().replace(/[^A-Z0-9]/g,'');
-    const iframe = document.getElementById('chartFrame');
-    iframe.src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${upper}USDT&interval=30&hidesidetoolbar=1&symboledit=1`;
-    document.getElementById('chartTitle').textContent = 'Live Chart — ' + upper;
-    // switch to alerts tab
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.tab[data-tab="alerts"]').classList.add('active');
+/* UI wiring */
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const name = t.getAttribute('data-tab');
     document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-    document.getElementById('alerts').style.display = 'block';
-  };
+    document.getElementById(name).style.display = 'block';
+    if(name === 'alerts') loadAlerts();
+    if(name === 'diag') { loadDiagnostics(); loadDiagText(); }
+    if(name === 'dash') loadStatus();
+  });
+});
 
-  // auto-refresh
-  setInterval(loadStatus, 30000);
-  setInterval(loadDiagnostics, 60000);
-  setInterval(loadAlerts, 60000);
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const strategy = document.getElementById('strategySelect').value;
+  await jsonp('startEngine', { strategy });
+  notify('Start requested. Check Diagnostics.');
+  setTimeout(loadStatus, 1000);
+});
+document.getElementById('stopBtn').addEventListener('click', async () => {
+  await jsonp('stopEngine');
+  notify('Stop requested.');
+  setTimeout(loadStatus, 1000);
+});
+document.getElementById('manualBtn').addEventListener('click', async () => {
+  await jsonp('manualScan');
+  notify('Manual scan requested.');
+  setTimeout(()=>{ loadAlerts(); loadDiagnostics(); }, 1500);
+});
+document.getElementById('testBtn').addEventListener('click', async () => {
+  await jsonp('sendTestMessage');
+  notify('Telegram test requested.');
+});
 
-  // initial load
-  loadStatus(); loadDiagnostics(); loadAlerts();
+/* timeframe buttons */
+let currentTf = '15';
+document.querySelectorAll('.timeframe-btn').forEach(b => {
+  b.addEventListener('click', ()=> {
+    document.querySelectorAll('.timeframe-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentTf = b.getAttribute('data-interval');
+    const iframe = document.getElementById('tvFrame');
+    if(iframe.src) {
+      iframe.src = iframe.src.replace(/interval=[^&]*/, 'interval=' + currentTf);
+    }
+  });
+});
+
+/* loaders */
+async function loadStatus(){
+  try {
+    const res = await jsonp('getStatus');
+    if(!res || !res.success) return;
+    const d = res.data;
+    document.getElementById('engineStatus').textContent = d.isRunning ? '✅ Running' : '⛔ Stopped';
+    document.getElementById('engineSub').textContent = 'Last update: ' + (d.lastUpdate || new Date().toLocaleString());
+    document.getElementById('activeStrategy').textContent = d.activeStrategy || '-';
+    document.getElementById('todayAlerts').textContent = d.dailyAlerts || d.alertCount || 0;
+    document.getElementById('alertLimit').textContent = d.maxDailyAlerts || '-';
+    document.getElementById('strategySelect').value = d.activeStrategy || 'Enhanced';
+    document.getElementById('telegramStatus').textContent = d.telegramConfigured ? 'Telegram: configured' : 'Telegram: not configured';
+    if(d.lastApiCall && d.lastApiCall>0) document.getElementById('lastApi').textContent = new Date(d.lastApiCall).toLocaleString();
+    else document.getElementById('lastApi').textContent = 'Never';
+    // cache indicator (read diagnostics)
+    const diag = await jsonp('getDiagnostics');
+    const last = (diag && diag.data && diag.data.length) ? diag.data[0] : null;
+    if(last && typeof last.message === 'string' && /cached/i.test(last.message)){
+      document.getElementById('cacheStatus').textContent = '(Using cached market data)';
+    } else {
+      document.getElementById('cacheStatus').textContent = '';
+    }
+  } catch(e){ console.error(e); }
+}
+
+async function loadDiagnostics(){
+  try {
+    const res = await jsonp('getDiagnostics');
+    const rows = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+    const tbody = document.getElementById('diagBody'); tbody.innerHTML = '';
+    if(!rows.length){ tbody.innerHTML = '<tr><td colspan="3">No logs</td></tr>'; return; }
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td><td>${r.level}</td><td>${r.message}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e){ console.error(e); document.getElementById('diagBody').innerHTML = '<tr><td colspan="3">Error loading logs</td></tr>'; }
+}
+
+async function loadDiagText(){
+  try {
+    const res = await jsonp('diagText');
+    if(res && res.success && res.data && res.data.text) document.getElementById('diagText').textContent = res.data.text;
+    else document.getElementById('diagText').textContent = 'No diag text';
+  } catch(e){ console.error(e); document.getElementById('diagText').textContent = 'Error loading diag text'; }
+}
+
+async function loadAlerts(){
+  try {
+    const res = await jsonp('getTradeAlerts');
+    const rows = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+    const tbody = document.getElementById('alertsBody'); tbody.innerHTML = '';
+    if(!rows.length){ tbody.innerHTML = '<tr><td colspan="5">No trade alerts</td></tr>'; return; }
+    rows.forEach(r => {
+      const sym = (r.symbol||'').toUpperCase();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td>
+                      <td><span class="coin-link" onclick="showChart('${sym}')">${sym}</span></td>
+                      <td>${r.coin||''}</td>
+                      <td>${r.price||''}</td>
+                      <td>${r.confidence||''}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e){ console.error(e); document.getElementById('alertsBody').innerHTML = '<tr><td colspan="5">Error loading alerts</td></tr>'; }
+}
+
+window.showChart = function(symbol){
+  if(!symbol) return;
+  const s = symbol.replace(/[^A-Z0-9]/g,'');
+  const frame = document.getElementById('tvFrame');
+  frame.src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${s}USDT&interval=${currentTf}&hidesidetoolbar=1&symboledit=1`;
+  document.getElementById('chartTitle').textContent = 'Live Chart — ' + s;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="alerts"]').classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+  document.getElementById('alerts').style.display = 'block';
+}
+
+/* small notifier */
+function notify(msg){
+  const n = document.createElement('div'); n.className='notification'; n.textContent=msg;
+  document.body.appendChild(n);
+  setTimeout(()=> n.remove(), 4000);
+}
+
+/* auto-refresh */
+setInterval(loadStatus, 30000);
+setInterval(loadDiagnostics, 60000);
+setInterval(loadAlerts, 60000);
+
+/* initial load */
+document.getElementById('webUrl').textContent = WEB_APP_URL;
+loadStatus(); loadDiagnostics(); loadAlerts(); loadDiagText();
 </script>
 </body>
 </html>
