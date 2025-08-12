@@ -2,145 +2,156 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mitra Signal Dashboard</title>
+<title>Mitra Trading Dashboard</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #0d1117;
-    color: #c9d1d9;
-    margin: 0;
-    padding: 0;
-  }
-  header {
-    padding: 20px;
-    background-color: #161b22;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-  }
-  main {
-    padding: 20px;
-  }
-  .card {
-    background-color: #161b22;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-  .card h2 {
-    margin-top: 0;
-    font-size: 18px;
-  }
-  select, button {
-    padding: 8px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-  }
-  select {
-    background-color: #21262d;
-    color: #c9d1d9;
-  }
-  button {
-    background-color: #238636;
-    color: white;
-    cursor: pointer;
-  }
-  button.stop {
-    background-color: #da3633;
-  }
-  button:hover {
-    opacity: 0.9;
-  }
-  .status {
-    font-size: 14px;
-    margin-top: 10px;
-  }
-  .status span {
-    font-weight: bold;
-  }
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; }
+    .tabs { display: flex; background: #222; }
+    .tab { padding: 12px 20px; cursor: pointer; color: #aaa; }
+    .tab.active { background: #333; color: #fff; }
+    .tab-content { display: none; padding: 20px; }
+    .tab-content.active { display: block; }
+    button { padding: 8px 14px; margin: 5px; background: #28a745; color: #fff; border: none; cursor: pointer; }
+    button.stop { background: #dc3545; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { padding: 8px; border: 1px solid #444; text-align: left; }
+    th { background: #333; }
+    tr:nth-child(even) { background: #222; }
+    iframe { border: none; width: 100%; height: 400px; margin-top: 15px; }
 </style>
 </head>
 <body>
 
-<header>Mitra Signal Dashboard</header>
+<div class="tabs">
+    <div class="tab active" onclick="showTab('dashboard')">Dashboard</div>
+    <div class="tab" onclick="showTab('diagnostics')">Diagnostics</div>
+    <div class="tab" onclick="showTab('tradeAlerts')">Trade Alerts</div>
+</div>
 
-<main>
-  <div class="card">
-    <h2>Engine Control</h2>
-    <label for="strategy">Select Strategy:</label>
-    <select id="strategy">
-      <option value="Ganu">Ganu</option>
-      <option value="Enhanced">Enhanced</option>
-      <option value="Scalping">Scalping</option>
+<div id="dashboard" class="tab-content active">
+    <h2>Status</h2>
+    <p><strong>Engine:</strong> <span id="status-engine">Loading...</span></p>
+    <p><strong>Strategy:</strong> <span id="status-strategy">Loading...</span></p>
+    <p><strong>Alerts Today:</strong> <span id="status-alerts">Loading...</span> / <span id="status-limit">Loading...</span></p>
+    <p><strong>Telegram:</strong> <span id="status-telegram">Loading...</span></p>
+
+    <h3>Controls</h3>
+    <select id="strategy-select">
+        <option value="Enhanced">Enhanced</option>
+        <option value="Ganu">Ganu</option>
+        <option value="Scalping">Scalping</option>
     </select>
-    <br>
     <button onclick="startEngine()">Start Engine</button>
     <button class="stop" onclick="stopEngine()">Stop Engine</button>
-    <button onclick="manualScan()">Run Manual Scan</button>
-    <button onclick="sendTestMessage()">Send Telegram Test</button>
-    <div class="status" id="statusBox">Loading status...</div>
-  </div>
-</main>
+    <button onclick="sendTest()">Send Test Telegram</button>
+</div>
+
+<div id="diagnostics" class="tab-content">
+    <h2>Diagnostics Log (Last 50)</h2>
+    <table>
+        <thead>
+            <tr><th>Time</th><th>Level</th><th>Message</th></tr>
+        </thead>
+        <tbody id="diagnostics-body"></tbody>
+    </table>
+</div>
+
+<div id="tradeAlerts" class="tab-content">
+    <h2>Recent Trade Alerts</h2>
+    <table>
+        <thead>
+            <tr><th>Time</th><th>Coin</th><th>Symbol</th><th>Price</th><th>Confidence</th></tr>
+        </thead>
+        <tbody id="alerts-body"></tbody>
+    </table>
+    <div id="chart-container"></div>
+</div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBXjQ0IlDtzgFah5KxPr2zdeQLD-WdJT-6YEdiFMX3wnw-ciET2wo2XCqyquVRQ9w5/exec";
 
-async function getStatus() {
-  try {
-    const res = await fetch(`${API_URL}?action=getStatus`);
+function showTab(id) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
+    document.getElementById(id).classList.add('active');
+}
+
+async function fetchStatus() {
+    const res = await fetch(`${WEB_APP_URL}?action=getStatus`);
     const data = await res.json();
-    document.getElementById('statusBox').innerHTML =
-      `Engine: <span>${data.isRunning ? 'Running' : 'Stopped'}</span><br>
-      Strategy: <span>${data.activeStrategy}</span><br>
-      Telegram Configured: <span>${data.telegramConfigured ? 'Yes ✅' : 'No ❌'}</span><br>
-      Alerts Today: <span>${data.todayAlerts}/${data.alertLimit}</span>`;
-  } catch (err) {
-    document.getElementById('statusBox').innerText = "Error fetching status";
-  }
+    document.getElementById('status-engine').textContent = data.isRunning ? "Running" : "Stopped";
+    document.getElementById('status-strategy').textContent = data.activeStrategy;
+    document.getElementById('status-alerts').textContent = data.todayAlerts;
+    document.getElementById('status-limit').textContent = data.alertLimit;
+    document.getElementById('status-telegram').textContent = data.telegramConfigured ? "Configured" : "Not Configured";
+}
+
+async function fetchDiagnostics() {
+    const res = await fetch(`${WEB_APP_URL}?action=getDiagnostics`);
+    const data = await res.json();
+    const tbody = document.getElementById('diagnostics-body');
+    tbody.innerHTML = "";
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.time}</td><td>${row.level}</td><td>${row.message}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+async function fetchTradeAlerts() {
+    const res = await fetch(`${WEB_APP_URL}?action=getTradeAlerts`);
+    const data = await res.json();
+    const tbody = document.getElementById('alerts-body');
+    tbody.innerHTML = "";
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.time}</td><td>${row.coin}</td><td>${row.symbol}</td><td>${row.price}</td><td>${row.confidence}</td>`;
+        tr.addEventListener('click', () => showChart(row.symbol));
+        tbody.appendChild(tr);
+    });
+}
+
+function showChart(symbol) {
+    if (!symbol) return;
+    document.getElementById('chart-container').innerHTML = `
+        <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE:${symbol.toUpperCase()}USDT&interval=30&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hidevolume=0&allow_symbol_change=1" allowtransparency="true" scrolling="no"></iframe>
+    `;
 }
 
 async function startEngine() {
-  const strategy = document.getElementById('strategy').value;
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "startEngine", strategy }),
-    headers: { "Content-Type": "application/json" }
-  });
-  getStatus();
+    const strategy = document.getElementById('strategy-select').value;
+    await fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "startEngine", strategy }),
+        headers: { "Content-Type": "application/json" }
+    });
+    fetchStatus();
 }
 
 async function stopEngine() {
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "stopEngine" }),
-    headers: { "Content-Type": "application/json" }
-  });
-  getStatus();
+    await fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "stopEngine" }),
+        headers: { "Content-Type": "application/json" }
+    });
+    fetchStatus();
 }
 
-async function manualScan() {
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "manualScan" }),
-    headers: { "Content-Type": "application/json" }
-  });
-  alert("Manual scan triggered (check logs & sheet)");
+async function sendTest() {
+    await fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "sendTestMessage" }),
+        headers: { "Content-Type": "application/json" }
+    });
 }
 
-async function sendTestMessage() {
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ action: "sendTestMessage" }),
-    headers: { "Content-Type": "application/json" }
-  });
-  alert("Test message sent to Telegram");
-}
+setInterval(fetchStatus, 30000);
+setInterval(fetchDiagnostics, 60000);
+setInterval(fetchTradeAlerts, 60000);
 
-// Auto-refresh every 30s
-getStatus();
-setInterval(getStatus, 30000);
+fetchStatus();
+fetchDiagnostics();
+fetchTradeAlerts();
 </script>
 
 </body>
