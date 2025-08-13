@@ -2,308 +2,240 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mitra Signal — Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mitra Signal — Crypto Dashboard</title>
 <style>
 :root{
-  --bg:#0a0b0f; --card:#0f1720; --muted:#94a3b8; --accent:#60a5fa; --success:#10b981; --warn:#f59e0b; --danger:#ef4444;
+  --bg:#0b0f14; --panel:#121824; --muted:#7b8a9a; --text:#e8f0ff;
+  --accent:#4da3ff; --ok:#27c281; --warn:#ffb020; --err:#ff5d5d;
+  --chip:#1a2233;
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#eaf2ff}
-.app{max-width:1200px;margin:18px auto;padding:18px}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.brand{display:flex;gap:12px;align-items:center}
-.logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:800}
-h1{font-size:18px;margin:0}
-.tabs{display:flex;gap:8px;margin-top:18px}
-.tab{padding:10px 14px;border-radius:10px;background:var(--card);cursor:pointer;color:var(--muted)}
-.tab.active{background:linear-gradient(180deg,#0f1720,#0b1220);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-.full{grid-column:1/-1}
-.label{font-size:12px;color:var(--muted);margin-bottom:6px}
-.value{font-size:20px;font-weight:700}
-.controls{display:flex;gap:8px;flex-wrap:wrap}
-select,button{padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.02);color:#eaf2ff}
-button.primary{background:var(--accent);color:#06202a;font-weight:700}
-button.warn{background:var(--warn);color:#071117}
-button.danger{background:var(--danger);color:#fff}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
-th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
-thead th{color:var(--muted);font-weight:600}
-.coin-link{color:var(--accent);cursor:pointer;text-decoration:underline}
-.small{font-size:12px;color:var(--muted)}
-iframe{width:100%;height:420px;border-radius:8px;border:0;margin-top:12px}
-.timeframe-btn{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:transparent;color:var(--muted)}
-.timeframe-btn.active{background:rgba(96,165,250,0.12);color:#fff;border-color:rgba(96,165,250,0.22)}
-@media(max-width:900px){ .grid{grid-template-columns:1fr} }
-.notification{position:fixed;top:18px;right:18px;padding:12px 16px;border-radius:10px;background:#111;color:#fff;z-index:9999}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,Segoe UI,Roboto,Ubuntu}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.badge{width:40px;height:40px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#001b33;font-weight:800}
+h1{font-size:22px;margin:0}
+.sub{color:var(--muted);font-size:12px}
+.panel{background:var(--panel);border:1px solid #1d2636;border-radius:12px;padding:16px}
+.grid{display:grid;gap:16px}
+.grid3{grid-template-columns:repeat(3,1fr)}
+.kv{display:flex;flex-direction:column;gap:6px}
+.kv .title{color:var(--muted);font-size:12px}
+.kv .value{font-size:20px;font-weight:700}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+select,button{background:#121723;color:var(--text);border:1px solid #2a354a;border-radius:10px;padding:10px 12px}
+button.accent{background:#0e2a45;border-color:#1e4775}
+button.danger{background:#3a1420;border-color:#6f2141}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #1d2636;font-size:13px}
+th{color:var(--muted);text-align:left}
+.badgeState{display:inline-flex;align-items:center;gap:6px;background:var(--chip);padding:6px 10px;border-radius:999px}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.ok{background:var(--ok)}
+.dot.off{background:var(--err)}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{background:#111827;color:#b7c6db;border:1px solid #1f2a3c;padding:8px 12px;border-radius:10px;cursor:pointer}
+.tab.active{color:#fff;background:#162235}
+.hide{display:none}
+.footer{margin:20px 0;color:var(--muted);font-size:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{padding:6px 10px;font-size:12px}
 </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div class="logo">M</div>
-        <div>
-          <h1>Mitra Signal — Crypto Dashboard</h1>
-          <div class="small">Real-time control • Diagnostics • Trade Alerts</div>
-        </div>
-      </div>
-      <div class="small">Web App: <span id="webUrl"></span></div>
-    </header>
+<div class="wrap">
+  <div class="header">
+    <div class="badge">M</div>
+    <div>
+      <h1>Mitra Signal — Crypto Dashboard</h1>
+      <div class="sub">Real-time control • Diagnostics • Trade Alerts</div>
+    </div>
+  </div>
 
-    <div class="tabs" role="tablist">
+  <div class="panel">
+    <div class="sub" id="webappLink">Web App: <a target="_blank" id="gsLink"></a></div>
+    <div class="tabs">
       <div class="tab active" data-tab="dash">Dashboard</div>
       <div class="tab" data-tab="alerts">Trade Alerts</div>
       <div class="tab" data-tab="diag">Diagnostics</div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="label">Engine Status</div>
-        <div id="engineStatus" class="value">Loading…</div>
-        <div id="engineSub" class="small">—</div>
+    <!-- DASH -->
+    <div id="dash" class="grid grid3">
+      <div class="panel kv">
+        <div class="title">Engine Status</div>
+        <div class="value"><span class="badgeState"><span id="engDot" class="dot off"></span><span id="engText">Stopped</span></span></div>
+        <div class="sub" id="lastUpdate">Last update: —</div>
       </div>
-
-      <div class="card">
-        <div class="label">Active Strategy</div>
-        <div id="activeStrategy" class="value">—</div>
-        <div id="strategyDesc" class="small">—</div>
+      <div class="panel kv">
+        <div class="title">Active Strategy</div>
+        <div class="value" id="strategy">—</div>
+        <div class="sub">Switch below</div>
       </div>
-
-      <div class="card">
-        <div class="label">Today's Alerts</div>
-        <div id="todayAlerts" class="value">0</div>
-        <div class="small">Limit: <span id="alertLimit">0</span></div>
-      </div>
-
-      <div class="card full">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="label">Controls</div>
-            <div class="controls" style="margin-top:8px">
-              <select id="strategySelect">
-                <option value="Enhanced">Enhanced</option>
-                <option value="Ganu">Ganu</option>
-                <option value="Scalping">Scalping</option>
-              </select>
-              <button id="startBtn" class="primary">Start Engine</button>
-              <button id="stopBtn" class="danger">Stop Engine</button>
-              <button id="manualBtn" class="">Manual Scan</button>
-              <button id="testBtn" class="">Send Telegram Test</button>
-            </div>
-          </div>
-          <div style="text-align:right">
-            <div class="label">Last API</div>
-            <div id="lastApi" class="small">Never</div>
-            <div id="telegramStatus" class="small">Telegram: checking…</div>
-            <div id="cacheStatus" class="small"></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="dash" class="card full tab-pane">
-        <h3 style="margin:0 0 8px 0">Overview</h3>
-        <div class="small">Use controls to manage the engine. Alerts are logged to the Google Sheet and sent to Telegram.</div>
-      </div>
-
-      <div id="alerts" class="card full tab-pane" style="display:none">
-        <h3 style="margin:0 0 8px 0">Recent Trade Alerts</h3>
-        <table>
-          <thead><tr><th>Time</th><th>Symbol</th><th>Coin</th><th>Price</th><th>Confidence</th></tr></thead>
-          <tbody id="alertsBody"><tr><td colspan="5">Loading…</td></tr></tbody>
-        </table>
-
-        <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
-          <div class="small">Chart timeframe:</div>
-          <button class="timeframe-btn" data-interval="5" id="tf5">5m</button>
-          <button class="timeframe-btn active" data-interval="15" id="tf15">15m</button>
-          <button class="timeframe-btn" data-interval="60" id="tf60">1h</button>
-          <button class="timeframe-btn" data-interval="D" id="tfD">1D</button>
-        </div>
-
-        <h4 id="chartTitle" style="margin-top:12px">Live Chart</h4>
-        <iframe id="tvFrame" src=""></iframe>
-      </div>
-
-      <div id="diag" class="card full tab-pane" style="display:none">
-        <h3 style="margin:0 0 8px 0">Diagnostics</h3>
-        <div class="small">Last 50 diagnostic log rows.</div>
-        <table>
-          <thead><tr><th>Time</th><th>Level</th><th>Message</th></tr></thead>
-          <tbody id="diagBody"><tr><td colspan="3">Loading…</td></tr></tbody>
-        </table>
-
-        <h4 style="margin-top:12px">Quick debug text</h4>
-        <pre id="diagText" style="background:#071126;padding:12px;border-radius:8px;color:#bcd4ff">Loading…</pre>
+      <div class="panel kv">
+        <div class="title">Today’s Alerts</div>
+        <div class="value" id="today">0</div>
+        <div class="sub" id="limitText">Limit: —</div>
       </div>
     </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div class="row">
+          <select id="strategySel">
+            <option>Ganu</option>
+            <option>Enhanced</option>
+            <option>Scalping</option>
+          </select>
+          <button id="startBtn" class="accent">Start Engine</button>
+          <button id="stopBtn" class="danger">Stop Engine</button>
+          <button id="scanBtn">Manual Scan</button>
+          <button id="tgBtn">Send Telegram Test</button>
+        </div>
+        <div class="chips">
+          <button class="tf" data-tf="15">15m</button>
+          <button class="tf" data-tf="60">1h</button>
+          <button class="tf" data-tf="240">4h</button>
+          <button class="tf" data-tf="D">1D</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div id="tvwrap" style="height:420px">
+        <iframe id="tv" title="Chart" style="width:100%;height:100%;border:0;border-radius:12px;background:#0b0f14"></iframe>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div id="alerts" class="panel hide">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Symbol</th><th>Coin</th><th>Strategy</th><th>Conf</th><th>Entry</th><th>TP</th><th>SL</th><th>Duration</th><th>Vol</th><th>Δ24h%</th></tr>
+        </thead>
+        <tbody id="alertRows"></tbody>
+      </table>
+    </div>
+
+    <!-- DIAG -->
+    <div id="diag" class="panel hide">
+      <pre id="diagText" style="white-space:pre-wrap;max-height:420px;overflow:auto;margin:0"></pre>
+    </div>
+
+    <div class="footer">© Mitra Signal — runs every 5 minutes automatically.</div>
   </div>
+</div>
 
 <script>
-/* CONFIG */
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec";
+const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec";
 
-/* JSONP helper */
-function jsonp(action, params = {}) {
-  return new Promise((resolve, reject) => {
-    const cb = 'cb_' + Math.random().toString(36).slice(2,9);
-    window[cb] = function(res){ try{ resolve(res); } finally { cleanup(); } };
-    function cleanup(){ try{ delete window[cb]; } catch(e){} const el = document.getElementById(cb); if(el) el.remove(); }
-    const url = new URL(WEB_APP_URL);
-    url.searchParams.set('action', action);
-    url.searchParams.set('callback', cb);
-    Object.keys(params||{}).forEach(k => url.searchParams.set(k, params[k]));
-    const s = document.createElement('script'); s.src = url.toString(); s.id = cb;
-    s.onerror = () => { cleanup(); reject(new Error('JSONP failed')); };
-    document.head.appendChild(s);
-  });
+const el = (id)=>document.getElementById(id);
+el('gsLink').textContent = GS_WEB_APP_URL;
+el('gsLink').href = GS_WEB_APP_URL;
+
+function setTab(tab){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('dash').classList.toggle('hide', tab!=='dash');
+  document.getElementById('alerts').classList.toggle('hide', tab!=='alerts');
+  document.getElementById('diag').classList.toggle('hide', tab!=='diag');
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = ()=>setTab(t.dataset.tab));
+
+async function getJSON(url){
+  const r = await fetch(url, { cache: 'no-store' });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function postJSON(url, body){
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
 }
 
-/* UI wiring */
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    const name = t.getAttribute('data-tab');
-    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-    document.getElementById(name).style.display = 'block';
-    if(name === 'alerts') loadAlerts();
-    if(name === 'diag') { loadDiagnostics(); loadDiagText(); }
-    if(name === 'dash') loadStatus();
-  });
-});
-
-document.getElementById('startBtn').addEventListener('click', async () => {
-  const strategy = document.getElementById('strategySelect').value;
-  await jsonp('startEngine', { strategy });
-  notify('Start requested. Check Diagnostics.');
-  setTimeout(loadStatus, 1000);
-});
-document.getElementById('stopBtn').addEventListener('click', async () => {
-  await jsonp('stopEngine');
-  notify('Stop requested.');
-  setTimeout(loadStatus, 1000);
-});
-document.getElementById('manualBtn').addEventListener('click', async () => {
-  await jsonp('manualScan');
-  notify('Manual scan requested.');
-  setTimeout(()=>{ loadAlerts(); loadDiagnostics(); }, 1500);
-});
-document.getElementById('testBtn').addEventListener('click', async () => {
-  await jsonp('sendTestMessage');
-  notify('Telegram test requested.');
-});
-
-/* timeframe buttons */
-let currentTf = '15';
-document.querySelectorAll('.timeframe-btn').forEach(b => {
-  b.addEventListener('click', ()=> {
-    document.querySelectorAll('.timeframe-btn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    currentTf = b.getAttribute('data-interval');
-    const iframe = document.getElementById('tvFrame');
-    if(iframe.src) {
-      iframe.src = iframe.src.replace(/interval=[^&]*/, 'interval=' + currentTf);
+async function refresh(){
+  try{
+    const s = await getJSON(GS_WEB_APP_URL+'?type=status');
+    el('engText').textContent = s.isRunning?'Running':'Stopped';
+    el('engDot').classList.toggle('ok', s.isRunning);
+    el('engDot').classList.toggle('off', !s.isRunning);
+    el('strategy').textContent = s.strategy || '—';
+    el('today').textContent = s.todayAlerts ?? 0;
+    el('limitText').textContent = 'Limit: ' + (s.limit ?? '-');
+    el('lastUpdate').textContent = 'Last update: ' + new Date().toISOString();
+  }catch(e){console.error(e)}
+  refreshAlerts();
+  refreshDiag();
+}
+async function refreshAlerts(){
+  try{
+    const a = await getJSON(GS_WEB_APP_URL+'?type=alerts');
+    const rows = (a.data||[]).map(r=>{
+      return `<tr>
+        <td>${new Date(r.time).toLocaleString()}</td>
+        <td>${r.symbol||''}</td>
+        <td>${r.name||''}</td>
+        <td>${r.strategy||''}</td>
+        <td>${r.confidence||''}%</td>
+        <td>$${fmt(r.entry)}</td>
+        <td>$${fmt(r.target)}</td>
+        <td>$${fmt(r.stop)}</td>
+        <td>${r.timeframe||''}</td>
+        <td>${num(r.volume)}</td>
+        <td>${fmt(r.change24)}%</td>
+      </tr>`;
+    }).join('');
+    el('alertRows').innerHTML = rows || '<tr><td colspan="11">No alerts yet.</td></tr>';
+    // update chart symbol to the last alert
+    if ((a.data||[]).length){
+      const sym = a.data[0].symbol || 'BTC';
+      loadTV(sym);
     }
-  });
+  }catch(e){console.error(e)}
+}
+async function refreshDiag(){
+  try{
+    const txt = await fetch(GS_WEB_APP_URL+'?type=diagnostics').then(r=>r.text());
+    el('diagText').textContent = txt || 'No diagnostics yet.';
+  }catch(e){console.error(e)}
+}
+
+function fmt(n){ return Number(n||0).toFixed(2); }
+function num(n){ return Number(n||0).toLocaleString(); }
+
+el('startBtn').onclick = async ()=>{
+  const strategy = el('strategySel').value;
+  await postJSON(GS_WEB_APP_URL, { action:'start', strategy });
+  refresh();
+};
+el('stopBtn').onclick = async ()=>{
+  await postJSON(GS_WEB_APP_URL, { action:'stop' });
+  refresh();
+};
+el('scanBtn').onclick = async ()=>{
+  await postJSON(GS_WEB_APP_URL, { action:'scan' });
+  refresh();
+};
+el('tgBtn').onclick = async ()=>{
+  await postJSON(GS_WEB_APP_URL, { action:'tg_test' });
+  alert('Telegram test sent (check bot).');
+};
+
+function loadTV(symbol){
+  // Basic TradingView embed via tv widget URL
+  const s = (symbol||'BTC').toUpperCase() + 'USDT';
+  const tf = window._tf || '60';
+  const url = `https://s.tradingview.com/widgetembed/?frameElementId=tvchart&symbol=BINANCE%3A${encodeURIComponent(s)}&interval=${encodeURIComponent(tf)}&hidesidetoolbar=1&symboledit=1&saveimage=0&toolbarbg=rgba(19%2C23%2C34%2C1)&studies=&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&allow_symbol_change=1&hideideas=1`;
+  el('tv').src = url;
+}
+document.querySelectorAll('.tf').forEach(b=>{
+  b.onclick = ()=>{ window._tf = b.dataset.tf; loadTV('BTC'); };
 });
 
-/* loaders */
-async function loadStatus(){
-  try {
-    const res = await jsonp('getStatus');
-    if(!res || !res.success) return;
-    const d = res.data;
-    document.getElementById('engineStatus').textContent = d.isRunning ? '✅ Running' : '⛔ Stopped';
-    document.getElementById('engineSub').textContent = 'Last update: ' + (d.lastUpdate || new Date().toLocaleString());
-    document.getElementById('activeStrategy').textContent = d.activeStrategy || '-';
-    document.getElementById('todayAlerts').textContent = d.dailyAlerts || d.alertCount || 0;
-    document.getElementById('alertLimit').textContent = d.maxDailyAlerts || '-';
-    document.getElementById('strategySelect').value = d.activeStrategy || 'Enhanced';
-    document.getElementById('telegramStatus').textContent = d.telegramConfigured ? 'Telegram: configured' : 'Telegram: not configured';
-    if(d.lastApiCall && d.lastApiCall>0) document.getElementById('lastApi').textContent = new Date(d.lastApiCall).toLocaleString();
-    else document.getElementById('lastApi').textContent = 'Never';
-    // cache indicator (read diagnostics)
-    const diag = await jsonp('getDiagnostics');
-    const last = (diag && diag.data && diag.data.length) ? diag.data[0] : null;
-    if(last && typeof last.message === 'string' && /cached/i.test(last.message)){
-      document.getElementById('cacheStatus').textContent = '(Using cached market data)';
-    } else {
-      document.getElementById('cacheStatus').textContent = '';
-    }
-  } catch(e){ console.error(e); }
-}
-
-async function loadDiagnostics(){
-  try {
-    const res = await jsonp('getDiagnostics');
-    const rows = (res && res.success && Array.isArray(res.data)) ? res.data : [];
-    const tbody = document.getElementById('diagBody'); tbody.innerHTML = '';
-    if(!rows.length){ tbody.innerHTML = '<tr><td colspan="3">No logs</td></tr>'; return; }
-    rows.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td><td>${r.level}</td><td>${r.message}</td>`;
-      tbody.appendChild(tr);
-    });
-  } catch(e){ console.error(e); document.getElementById('diagBody').innerHTML = '<tr><td colspan="3">Error loading logs</td></tr>'; }
-}
-
-async function loadDiagText(){
-  try {
-    const res = await jsonp('diagText');
-    if(res && res.success && res.data && res.data.text) document.getElementById('diagText').textContent = res.data.text;
-    else document.getElementById('diagText').textContent = 'No diag text';
-  } catch(e){ console.error(e); document.getElementById('diagText').textContent = 'Error loading diag text'; }
-}
-
-async function loadAlerts(){
-  try {
-    const res = await jsonp('getTradeAlerts');
-    const rows = (res && res.success && Array.isArray(res.data)) ? res.data : [];
-    const tbody = document.getElementById('alertsBody'); tbody.innerHTML = '';
-    if(!rows.length){ tbody.innerHTML = '<tr><td colspan="5">No trade alerts</td></tr>'; return; }
-    rows.forEach(r => {
-      const sym = (r.symbol||'').toUpperCase();
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${new Date(r.time).toLocaleString()}</td>
-                      <td><span class="coin-link" onclick="showChart('${sym}')">${sym}</span></td>
-                      <td>${r.coin||''}</td>
-                      <td>${r.price||''}</td>
-                      <td>${r.confidence||''}</td>`;
-      tbody.appendChild(tr);
-    });
-  } catch(e){ console.error(e); document.getElementById('alertsBody').innerHTML = '<tr><td colspan="5">Error loading alerts</td></tr>'; }
-}
-
-window.showChart = function(symbol){
-  if(!symbol) return;
-  const s = symbol.replace(/[^A-Z0-9]/g,'');
-  const frame = document.getElementById('tvFrame');
-  frame.src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${s}USDT&interval=${currentTf}&hidesidetoolbar=1&symboledit=1`;
-  document.getElementById('chartTitle').textContent = 'Live Chart — ' + s;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('.tab[data-tab="alerts"]').classList.add('active');
-  document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-  document.getElementById('alerts').style.display = 'block';
-}
-
-/* small notifier */
-function notify(msg){
-  const n = document.createElement('div'); n.className='notification'; n.textContent=msg;
-  document.body.appendChild(n);
-  setTimeout(()=> n.remove(), 4000);
-}
-
-/* auto-refresh */
-setInterval(loadStatus, 30000);
-setInterval(loadDiagnostics, 60000);
-setInterval(loadAlerts, 60000);
-
-/* initial load */
-document.getElementById('webUrl').textContent = WEB_APP_URL;
-loadStatus(); loadDiagnostics(); loadAlerts(); loadDiagText();
+refresh();
+setInterval(refresh, 15000); // refresh every 15s
+loadTV('BTC');
 </script>
 </body>
 </html>
