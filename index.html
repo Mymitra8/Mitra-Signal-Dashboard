@@ -19,6 +19,7 @@ body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180de
 .table th{color:#9fb4ff;text-align:left;padding:8px}
 .table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
 pre{white-space:pre-wrap;word-wrap:break-word}
+.admin{display:flex;gap:8px;align-items:center;margin-top:8px}
 @media(max-width:900px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
@@ -44,6 +45,7 @@ pre{white-space:pre-wrap;word-wrap:break-word}
         <div class="small">Engine Status</div>
         <div id="status" style="font-weight:700;font-size:18px">—</div>
         <div class="small" style="margin-top:8px">Active Strategy: <span id="active">—</span></div>
+        <div class="small" style="margin-top:8px">Last API: <span id="lastApi">—</span></div>
       </div>
 
       <div class="card" style="margin-top:12px">
@@ -53,7 +55,14 @@ pre{white-space:pre-wrap;word-wrap:break-word}
 
       <div class="card" style="margin-top:12px">
         <div class="small">Diagnostics</div>
-        <pre id="diag" style="height:340px;overflow:auto;color:#cfe6ff"></pre>
+        <pre id="diag" style="height:260px;overflow:auto;color:#cfe6ff"></pre>
+        <div class="admin">
+          <input id="adminKey" placeholder="ADMIN_KEY" style="padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#e6f0ff"/>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="forcePublic"> Force Public API
+          </label>
+          <button id="applyForce" class="btn" style="background:#2b6cb0">Apply</button>
+        </div>
       </div>
     </div>
 
@@ -78,9 +87,9 @@ pre{white-space:pre-wrap;word-wrap:break-word}
   </div>
 
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec'; // update if you redeploy
 
-async function callApi(params){
+async function apiGet(params){
   const u = new URL(WEB_APP_URL);
   Object.keys(params||{}).forEach(k => u.searchParams.set(k, params[k]));
   const r = await fetch(u.toString(), { cache:'no-store' });
@@ -89,7 +98,7 @@ async function callApi(params){
 
 async function refreshAll(){
   try {
-    const r = await callApi({ type:'status', t:Date.now() });
+    const r = await apiGet({ type:'status', t:Date.now() });
     const j = await r.json();
     if (j && j.success !== false && j.data){
       document.getElementById('status').textContent = j.data.isRunning ? 'Running' : 'Stopped';
@@ -99,16 +108,16 @@ async function refreshAll(){
     }
   } catch(e){ console.error(e); }
   await loadAlerts();
-  await loadDiagnostics();
+  await loadDiagnosticsJSON();
 }
 
 async function loadAlerts(){
   try {
-    const r = await callApi({ type:'alerts', t:Date.now() });
+    const r = await apiGet({ type:'alerts', t:Date.now() });
     const j = await r.json();
     const rows = j.data || [];
     const tbody = document.getElementById('alerts'); tbody.innerHTML = '';
-    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="7">No alerts</td></tr>'; return; }
+    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="7">No alerts</td></tr>'; document.getElementById('lastApi').textContent = 'No alerts yet'; return; }
     rows.slice(0,15).forEach(a=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${new Date(a.timestamp).toLocaleString()}</td>
@@ -122,14 +131,18 @@ async function loadAlerts(){
       tr.querySelector('a')?.addEventListener('click', ()=> loadChart((a.symbol||'BTC') + 'USD'));
     });
     if (rows[0]) loadChart((rows[0].symbol||'BTC') + 'USD');
-  } catch(e){ console.error(e); }
+    document.getElementById('lastApi').textContent = 'Alerts loaded';
+  } catch(e){ console.error(e); document.getElementById('lastApi').textContent = 'Alerts load failed'; }
 }
 
-async function loadDiagnostics(){
+async function loadDiagnosticsJSON(){
   try {
-    const r = await callApi({ type:'diagnostics', t:Date.now() });
-    const txt = await r.text();
-    document.getElementById('diag').textContent = txt;
+    const r = await apiGet({ type:'diagnosticsJSON', t:Date.now() });
+    const j = await r.json();
+    const arr = j.data || [];
+    document.getElementById('diag').textContent = arr.map(x => `${x.ts} [${x.level}] ${x.msg}`).join('\n');
+    const forcePublic = (arr || []).some(x => (x.msg || '').indexOf('FORCE_PUBLIC enabled') !== -1);
+    document.getElementById('forcePublic').checked = !!forcePublic;
   } catch(e){ console.error(e); }
 }
 
@@ -137,11 +150,26 @@ function fmt(v){ try { return Number(v).toLocaleString('en-IN',{maximumFractionD
 
 document.getElementById('start').addEventListener('click', async ()=>{
   const strat = document.getElementById('strategy').value;
-  await callApi({ type:'start', strategy: strat }); await refreshAll();
+  await apiGet({ type:'start', strategy: strat });
+  await refreshAll();
 });
-document.getElementById('stop').addEventListener('click', async ()=>{ await callApi({ type:'stop' }); await refreshAll(); });
-document.getElementById('manual').addEventListener('click', async ()=>{ await callApi({ type:'manualScan' }); await refreshAll(); });
+document.getElementById('stop').addEventListener('click', async ()=>{ await apiGet({ type:'stop' }); await refreshAll(); });
+document.getElementById('manual').addEventListener('click', async ()=>{ await apiGet({ type:'manualScan' }); await refreshAll(); });
 document.getElementById('refresh').addEventListener('click', async ()=>{ await refreshAll(); });
+
+document.getElementById('applyForce').addEventListener('click', async ()=>{
+  const adminKey = document.getElementById('adminKey').value.trim();
+  if (!adminKey){ alert('Enter ADMIN_KEY to perform admin actions'); return; }
+  const force = document.getElementById('forcePublic').checked;
+  const u = new URL(WEB_APP_URL);
+  u.searchParams.set('type','setProp');
+  u.searchParams.set('adminKey', adminKey);
+  u.searchParams.set('key','FORCE_PUBLIC');
+  u.searchParams.set('value', force ? 'true' : 'false');
+  const r = await fetch(u.toString(), { cache:'no-store' });
+  const j = await r.json();
+  if (j && j.success) { alert('Applied'); await refreshAll(); } else { alert('Admin action failed: ' + (j && j.error)); }
+});
 
 function loadChart(sym){
   const s = (sym||'BTCUSD').replace(/[^A-Za-z0-9]/g,'');
