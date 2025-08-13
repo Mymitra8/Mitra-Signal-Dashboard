@@ -1,309 +1,181 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8">
-<title>Crypto Signals — Mitra 24×365</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mitra Signal Dashboard</title>
 <style>
 :root{
-  --bg:#0b1020;
-  --panel:#121a33;
-  --ink:#e8edff;
-  --muted:#8ea1ff;
-  --accent:#4c8dff;
-  --success:#16c784;
-  --warn:#ffb020;
-  --danger:#ff5d5d;
-  --chip:#1b2547;
+  --bg:#071029; --card:#0f1724; --muted:#9fb4ff; --accent:#4da3ff; --ok:#10b981; --warn:#f59e0b;
+  --glass: rgba(255,255,255,0.04);
 }
-*{ box-sizing:border-box; }
-body{
-  margin:0; background:linear-gradient(180deg,#0a0f23,#0b1127 60%,#0a0f23);
-  color:var(--ink); font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
-}
-.header{
-  display:flex; align-items:center; gap:12px; padding:18px 20px; position:sticky; top:0; z-index:10;
-  background:rgba(9,14,30,.6); backdrop-filter: blur(8px); border-bottom:1px solid #1b2140;
-}
-.logo{
-  width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#3c69ff,#00d4ff);
-  box-shadow:0 6px 20px rgba(0,153,255,.25);
-}
-h1{ font-size:18px; margin:0; letter-spacing:.3px; }
-.header .status{
-  margin-left:auto; display:flex; gap:8px; align-items:center;
-}
-.badge{
-  padding:6px 10px; border-radius:999px; background:var(--chip); color:var(--muted); border:1px solid #23305d;
-}
-.btn{
-  background:var(--accent); color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer;
-  box-shadow:0 6px 20px rgba(76,141,255,.25); transition:.2s;
-}
-.btn.ghost{ background:#131c3b; border:1px solid #26346d; color:var(--ink); }
-.btn:hover{ transform: translateY(-1px); }
-
-.container{ padding:18px; display:grid; gap:18px; grid-template-columns: 380px 1fr; }
-.card{
-  background:linear-gradient(180deg,#121a33,#101735); border:1px solid #1b2547; border-radius:14px; padding:14px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 8px 30px rgba(0,0,0,.25);
-}
-.card h2{ margin:6px 0 10px; font-size:16px; color:#cfe0ff; }
-
-.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-
-.select, select{
-  width:100%; background:#0f1733; border:1px solid #223066; color:var(--ink); border-radius:10px; padding:10px 12px;
-}
-
-.list{
-  display:flex; flex-direction:column; gap:10px; max-height:480px; overflow:auto; padding-right:2px;
-}
-.item{
-  display:grid; grid-template-columns: 58px 1fr 120px; gap:10px; align-items:center;
-  background:#0f1631; border:1px solid #202c59; border-radius:12px; padding:10px;
-}
-.item .meta{ color:#a7b8ff; font-size:12px; }
-.tag{
-  display:inline-block; padding:3px 8px; border-radius:999px; background:#0d1330; border:1px solid #27346b; color:#b9c6ff; font-size:12px; margin-right:6px;
-}
-.kpi{
-  display:grid; grid-template-columns: repeat(3,1fr); gap:8px;
-}
-.k{ background:#0f1631; border:1px solid #1f2b58; border-radius:10px; padding:8px; text-align:center; }
-.k .v{ font-weight:700; font-size:15px; }
-
-.table{
-  width:100%; border-collapse:separate; border-spacing:0 8px;
-}
-.table th{ text-align:left; color:#9fb4ff; font-weight:600; font-size:12px; padding:6px 8px; }
-.table td{ padding:10px 8px; background:#0f1631; border:1px solid #1e2a58; }
-.table tr td:first-child{ border-radius:10px 0 0 10px; }
-.table tr td:last-child{ border-radius:0 10px 10px 0; }
-
-.footer{ text-align:center; color:#96a8ff; padding:16px 0 24px; opacity:.7; }
-
-@media (max-width: 1100px){
-  .container{ grid-template-columns:1fr; }
-}
+body{margin:0;background:linear-gradient(180deg,#071029,#081025);font-family:Inter,system-ui,Arial;color:#e6f0ff}
+.header{padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#324fd6,#19b3ff);display:flex;align-items:center;justify-content:center;font-weight:800}
+.title{font-size:18px}
+.controls{margin-left:auto;display:flex;gap:8px}
+.btn{background:var(--accent);color:#031025;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.card{background:var(--card);margin:18px; padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.grid{display:grid;grid-template-columns:280px 1fr;gap:18px}
+.kv{display:flex;flex-direction:column;gap:6px}
+.kv .label{color:#9fb4ff;font-size:12px}
+.kv .value{font-weight:700;font-size:20px}
+.list{max-height:560px;overflow:auto}
+.list .row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.02);align-items:center}
+.small{font-size:12px;color:#9fb4ff}
+.table{width:100%;border-collapse:collapse}
+.table th{color:#9fb4ff;text-align:left;padding:8px}
+.table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.footer{padding:12px;text-align:center;color:#8aa7ff}
+@media(max-width:900px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
   <div class="header">
-    <div class="logo"></div>
-    <h1>Mitra Signals • 24×365</h1>
-    <div class="status">
-      <span id="runningBadge" class="badge">Status: —</span>
-      <span id="strategyBadge" class="badge">Strategy: —</span>
+    <div class="logo">M</div>
+    <div class="title">Mitra Signals — Dashboard</div>
+    <div class="controls">
+      <select id="strategySelect">
+        <option value="MomentumBurst">Momentum Burst</option>
+        <option value="BreakoutPullback">Breakout Pullback</option>
+        <option value="MeanReversion">Mean Reversion</option>
+      </select>
       <button id="startBtn" class="btn">Start</button>
-      <button id="stopBtn" class="btn ghost">Stop</button>
+      <button id="stopBtn" class="btn" style="background:#ff6b6b">Stop</button>
+      <button id="scanBtn" class="btn" style="background:#1f2937;color:#fff">Manual Scan</button>
     </div>
   </div>
 
-  <div class="container">
-    <!-- LEFT: Controls & Alerts -->
-    <div class="card">
-      <h2>Controls</h2>
-      <div class="grid2">
-        <div>
-          <label>Strategy</label>
-          <select id="strategySelect">
-            <option value="MomentumBurst">Momentum Burst (1–12h)</option>
-            <option value="BreakoutPullback">Breakout Pullback (6–48h)</option>
-            <option value="MeanReversion">Mean Reversion (1–16h)</option>
-          </select>
-        </div>
-        <div>
-          <label>Actions</label>
-          <div style="display:flex; gap:8px;">
-            <button id="applyBtn" class="btn">Apply</button>
-            <button id="testBtn" class="btn ghost">Send Test Alert</button>
+  <div class="grid">
+    <div style="padding:18px">
+      <div class="card kv">
+        <div class="label">Engine Status</div>
+        <div id="engineStatus" class="value">—</div>
+        <div class="small">Active Strategy: <span id="activeStrategy">—</span></div>
+      </div>
+
+      <div class="card kv" style="margin-top:12px">
+        <div class="label">Today Alerts</div>
+        <div id="todayCount" class="value">0</div>
+        <div class="small">Top alerts and diagnostics below</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">Diagnostics</div>
+        <pre id="diag" style="height:300px;overflow:auto;background:transparent;border:none;padding:8px;color:#cfe6ff"></pre>
+      </div>
+    </div>
+
+    <div style="padding:18px">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>Recent Alerts</strong><div class="small">Top 15 (most recent)</div></div>
+          <div>
+            <button id="refreshBtn" class="btn" style="background:#2b6cff">Refresh</button>
           </div>
         </div>
+        <table class="table" style="margin-top:12px">
+          <thead><tr><th>Time</th><th>Coin</th><th>Sym</th><th>Conf</th><th>Entry</th><th>TP</th><th>SL</th><th>Exchange</th></tr></thead>
+          <tbody id="alertsTable"></tbody>
+        </table>
       </div>
 
-      <h2 style="margin-top:14px;">Latest Alerts (Top 15)</h2>
-      <div id="alertsList" class="list"></div>
-    </div>
-
-    <!-- RIGHT: Charts & Diagnostics -->
-    <div class="card">
-      <h2>Live Chart</h2>
-      <div style="display:flex; gap:8px; margin-bottom:10px;">
-        <button class="btn ghost tvBtn" data-tf="1">1m</button>
-        <button class="btn ghost tvBtn" data-tf="5">5m</button>
-        <button class="btn ghost tvBtn" data-tf="15">15m</button>
-        <button class="btn ghost tvBtn" data-tf="60">1h</button>
-        <button class="btn ghost tvBtn" data-tf="240">4h</button>
-        <button class="btn ghost tvBtn" data-tf="D">1D</button>
+      <div class="card" style="margin-top:12px">
+        <div class="small">Live Chart — click a symbol to open on TradingView</div>
+        <iframe id="chartFrame" style="width:100%;height:420px;border:0;margin-top:8px"></iframe>
       </div>
-      <div id="tv" style="height:420px;">
-        <!-- TradingView container -->
-        <div id="tradingview_widget"></div>
-      </div>
-
-      <h2 style="margin-top:14px;">Diagnostics</h2>
-      <pre id="diagBox" style="background:#0f1631;border:1px solid #1e2a58;border-radius:10px;padding:12px;height:180px;overflow:auto;color:#a9bbff;"></pre>
     </div>
   </div>
 
-  <div class="footer">Engine polls every 5 minutes • Live cache softens API limits • Secrets stay server-side</div>
+  <div class="footer">Engine polls every 5 minutes, uses server-side CoinGecko key and caching (no keys in browser).</div>
 
-  <script>
-    // Your Web App URL (server)
-    const API_BASE = 'https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec';
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec';
 
-    const els = {
-      runningBadge: document.getElementById('runningBadge'),
-      strategyBadge: document.getElementById('strategyBadge'),
-      startBtn: document.getElementById('startBtn'),
-      stopBtn: document.getElementById('stopBtn'),
-      applyBtn: document.getElementById('applyBtn'),
-      testBtn: document.getElementById('testBtn'),
-      strategySelect: document.getElementById('strategySelect'),
-      alertsList: document.getElementById('alertsList'),
-      diagBox: document.getElementById('diagBox'),
-    };
+async function doGet(q){
+  const url = new URL(WEB_APP_URL);
+  Object.keys(q||{}).forEach(k => url.searchParams.set(k, q[k]));
+  const res = await fetch(url.toString(), { cache:'no-store' });
+  return res;
+}
 
-    async function fetchJSON(url){
-      const r = await fetch(url, { cache:'no-store' });
-      return r.json();
+async function refreshStatus(){
+  try {
+    const r = await doGet({ type:'status' });
+    const json = await r.json();
+    if (json && json.ok){
+      const s = json.state;
+      document.getElementById('engineStatus').textContent = s.isRunning ? 'Running' : 'Stopped';
+      document.getElementById('activeStrategy').textContent = s.activeStrategy;
+      document.getElementById('todayCount').textContent = s.todayCount || 0;
+      document.getElementById('strategySelect').value = s.activeStrategy || 'MomentumBurst';
     }
-    async function fetchText(url){
-      const r = await fetch(url, { cache:'no-store' });
-      return r.text();
-    }
+  } catch(e){ console.error(e); }
+}
 
-    async function refreshStatus(){
-      try{
-        const st = await fetchJSON(`${API_BASE}?type=status&ts=${Date.now()}`);
-        if (!st.ok) throw new Error(st.error||'status failed');
-        els.runningBadge.textContent = 'Status: ' + (st.state.isRunning ? 'Running' : 'Stopped');
-        els.strategyBadge.textContent = 'Strategy: ' + st.state.activeStrategy;
-        // pre-select
-        els.strategySelect.value = st.state.activeStrategy;
-      }catch(e){
-        els.runningBadge.textContent = 'Status: error';
-      }
-    }
-
-    async function refreshAlerts(){
-      try{
-        const res = await fetchJSON(`${API_BASE}?type=alerts&ts=${Date.now()}`);
-        if (!res.ok) return;
-        const items = res.alerts.slice(-15).reverse();
-        els.alertsList.innerHTML = '';
-        items.forEach(a=>{
-          const div = document.createElement('div');
-          div.className='item';
-          const ts = new Date(a.timestamp);
-          div.innerHTML = `
-            <div>
-              <div style="font-weight:700">${a.symbol}</div>
-              <div class="meta">${a.strategy} • ${a.timeline}</div>
-            </div>
-            <div>
-              <span class="tag">${a.direction}</span>
-              <span class="tag">Conf: ${a.confidence}</span>
-              <span class="tag">24h: ${a.chg24h}</span>
-              <span class="tag">${a.exchange}</span>
-              <div class="meta">${ts.toLocaleString()}</div>
-            </div>
-            <div style="text-align:right">
-              <div class="meta">Entry ₹${fmt(a.entry)}</div>
-              <div class="meta">SL ₹${fmt(a.stop)} • TP ₹${fmt(a.tp)}</div>
-              <a href="${a.link}" target="_blank" class="btn ghost" style="padding:6px 10px;margin-top:4px;">Chart</a>
-            </div>
-          `;
-          div.addEventListener('click', ()=> loadTV(`${a.symbol}USD`));
-          els.alertsList.appendChild(div);
-        });
-        if (items[0]) loadTV(`${items[0].symbol}USD`);
-      }catch(e){
-        // ignore
-      }
-    }
-
-    async function refreshDiagnostics(){
-      try{
-        const txt = await fetchText(`${API_BASE}?type=diagnostics&ts=${Date.now()}`);
-        els.diagBox.textContent = txt;
-        els.diagBox.scrollTop = els.diagBox.scrollHeight;
-      }catch(e){}
-    }
-
-    function fmt(n){
-      try{ return Number(n).toLocaleString('en-IN', { maximumFractionDigits: 4 }); }catch(_){ return n; }
-    }
-
-    // Controls
-    els.startBtn.onclick = async ()=>{
-      await fetchJSON(`${API_BASE}?type=start&strategy=${encodeURIComponent(els.strategySelect.value)}&ts=${Date.now()}`);
-      await refreshStatus(); await refreshDiagnostics();
-    };
-    els.stopBtn.onclick = async ()=>{
-      await fetchJSON(`${API_BASE}?type=stop&ts=${Date.now()}`);
-      await refreshStatus(); await refreshDiagnostics();
-    };
-    els.applyBtn.onclick = async ()=>{
-      await fetch(`${API_BASE}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ action:'changeStrategy', strategy: els.strategySelect.value })
-      });
-      await refreshStatus(); await refreshDiagnostics();
-    };
-    els.testBtn.onclick = async ()=>{
-      await fetch(`${API_BASE}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ action:'sendTest' })
-      });
-      await refreshDiagnostics();
-    };
-
-    // TradingView
-    let tvSym = 'BTCUSD', tvTf = '60';
-    function loadTV(symbol){
-      tvSym = symbol;
-      renderTV();
-    }
-    function setTf(tf){
-      tvTf = tf;
-      renderTV();
-    }
-    function renderTV(){
-      const container = document.getElementById('tradingview_widget');
-      container.innerHTML = '';
-      new TradingView.widget({
-        "width": "100%",
-        "height": 420,
-        "symbol": tvSym,
-        "interval": tvTf,
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#0f1631",
-        "hide_side_toolbar": false,
-        "allow_symbol_change": true,
-        "container_id": "tradingview_widget"
-      });
-    }
-    document.querySelectorAll('.tvBtn').forEach(b=>{
-      b.addEventListener('click', ()=> setTf(b.dataset.tf));
+async function refreshAlerts(){
+  try {
+    const r = await doGet({ type:'alerts' });
+    const json = await r.json();
+    const rows = json.alerts || [];
+    const tbody = document.getElementById('alertsTable');
+    tbody.innerHTML = '';
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8">No alerts</td></tr>'; return; }
+    rows.slice(0,15).forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${new Date(a.timestamp).toLocaleString()}</td>
+                      <td><a href="${a.link||'#'}" target="_blank">${a.coin||''}</a></td>
+                      <td>${a.symbol||''}</td>
+                      <td>${a.confidence||''}</td>
+                      <td>₹${a.entry ? Number(a.entry).toLocaleString('en-IN',{maximumFractionDigits:4}) : ''}</td>
+                      <td>₹${a.tp ? Number(a.tp).toLocaleString('en-IN',{maximumFractionDigits:4}) : ''}</td>
+                      <td>₹${a.stop ? Number(a.stop).toLocaleString('en-IN',{maximumFractionDigits:4}) : ''}</td>
+                      <td>${a.exchange||''}</td>`;
+      tr.querySelector('a')?.addEventListener('click', ()=> loadChart((a.symbol||'BTC') + 'USD'));
+      tbody.appendChild(tr);
     });
+  } catch(e){ console.error(e); }
+}
 
-    // boot
-    (async function(){
-      await refreshStatus();
-      await refreshAlerts();
-      await refreshDiagnostics();
-      setInterval(refreshStatus, 15000);
-      setInterval(refreshAlerts, 20000);
-      setInterval(refreshDiagnostics, 25000);
-    })();
-  </script>
-  <script src="https://s3.tradingview.com/tv.js"></script>
+async function refreshDiagnostics(){
+  try {
+    const r = await doGet({ type:'diagnostics' });
+    const txt = await r.text();
+    document.getElementById('diag').textContent = txt;
+  } catch(e){ console.error(e); }
+}
+
+function loadChart(sym){
+  const s = (sym||'BTCUSD').replace(/[^A-Za-z0-9]/g,'');
+  const src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${encodeURIComponent(s)}&interval=60&hidesidetoolbar=1&theme=dark`;
+  document.getElementById('chartFrame').src = src;
+}
+
+document.getElementById('startBtn').addEventListener('click', async ()=>{
+  const strat = document.getElementById('strategySelect').value;
+  await doGet({ type:'start', strategy: strat });
+  await refreshStatus(); await refreshAlerts(); await refreshDiagnostics();
+});
+document.getElementById('stopBtn').addEventListener('click', async ()=>{
+  await doGet({ type:'stop' });
+  await refreshStatus(); await refreshDiagnostics();
+});
+document.getElementById('scanBtn').addEventListener('click', async ()=>{
+  await doGet({ type:'manualScan' });
+  await refreshStatus(); await refreshAlerts(); await refreshDiagnostics();
+});
+document.getElementById('refreshBtn').addEventListener('click', async ()=>{
+  await refreshAlerts(); await refreshDiagnostics(); await refreshStatus();
+});
+
+(async function init(){
+  await refreshStatus();
+  await refreshAlerts();
+  await refreshDiagnostics();
+  setInterval(refreshStatus, 15000);
+  setInterval(refreshAlerts, 20000);
+  setInterval(refreshDiagnostics, 30000);
+})();
+</script>
 </body>
 </html>
