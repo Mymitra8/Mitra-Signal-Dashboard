@@ -5,22 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Mitra Signals — Dashboard</title>
 <style>
-:root{--bg:#071029;--card:#0f1724;--muted:#9fb4ff;--accent:#4da3ff;--chip:#0b1630}
-body{margin:0;background:linear-gradient(180deg,#071029,#081025);color:#e6f0ff;font-family:Inter,system-ui,Arial}
-.header{display:flex;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.02)}
+:root{--bg:#071029;--card:#0f1724;--muted:#9fb4ff;--accent:#4da3ff}
+body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#071029,#081025);color:#e6f0ff}
+.header{display:flex;align-items:center;padding:12px 18px;background:rgba(255,255,255,0.02)}
 .logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#324fd6,#19b3ff);display:flex;align-items:center;justify-content:center}
-.title{margin-left:12px;font-size:16px}
-.controls{margin-left:auto;display:flex;gap:8px}
+.title{margin-left:12px;font-weight:700}
+.controls{margin-left:auto;display:flex;gap:8px;align-items:center}
 .btn{background:var(--accent);color:#021022;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
 .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
 .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-.small{font-size:12px;color:#a9c2ff}
-.list{max-height:520px;overflow:auto}
-.item{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.02)}
+.small{font-size:12px;color:#9fb4ff}
 .table{width:100%;border-collapse:collapse}
 .table th{color:#9fb4ff;text-align:left;padding:8px}
 .table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
-.footer{padding:12px;text-align:center;color:#8aa7ff}
+pre{white-space:pre-wrap;word-wrap:break-word}
 @media(max-width:900px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
@@ -55,7 +53,7 @@ body{margin:0;background:linear-gradient(180deg,#071029,#081025);color:#e6f0ff;f
 
       <div class="card" style="margin-top:12px">
         <div class="small">Diagnostics</div>
-        <pre id="diag" style="height:360px;overflow:auto;color:#cfe6ff"></pre>
+        <pre id="diag" style="height:340px;overflow:auto;color:#cfe6ff"></pre>
       </div>
     </div>
 
@@ -73,94 +71,83 @@ body{margin:0;background:linear-gradient(180deg,#071029,#081025);color:#e6f0ff;f
       </div>
 
       <div class="card" style="margin-top:12px">
-        <div class="small">Live Chart</div>
+        <div class="small">Live Chart (click a symbol)</div>
         <iframe id="chart" style="width:100%;height:420px;border:0;margin-top:8px"></iframe>
       </div>
     </div>
   </div>
 
-  <div class="footer">Engine polls every 5 minutes • Keys are server-side only</div>
-
 <script>
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec';
 
-async function callGET(params){
+async function getAPI(params){
   const u = new URL(WEB_APP_URL);
   Object.keys(params||{}).forEach(k => u.searchParams.set(k, params[k]));
-  const res = await fetch(u.toString(), { cache:'no-store' });
-  return res;
+  const r = await fetch(u.toString(), { cache:'no-store' });
+  return r;
 }
 
-async function refresh(){
+async function refreshAll(){
   try {
-    const r = await callGET({ type:'status', ts: Date.now() });
+    const r = await getAPI({ type:'status', t:Date.now() });
     const j = await r.json();
     if (j && j.success !== false && j.data){
-      const s = j.data;
-      document.getElementById('status').textContent = s.isRunning ? 'Running' : 'Stopped';
-      document.getElementById('active').textContent = s.activeStrategy;
-      document.getElementById('today').textContent = s.todayCount || 0;
-      document.getElementById('strategy').value = s.activeStrategy || 'MomentumBurst';
+      document.getElementById('status').textContent = j.data.isRunning ? 'Running' : 'Stopped';
+      document.getElementById('active').textContent = j.data.activeStrategy;
+      document.getElementById('today').textContent = j.data.todayCount || 0;
+      document.getElementById('strategy').value = j.data.activeStrategy || 'MomentumBurst';
     }
   } catch(e){ console.error(e); }
   await loadAlerts();
-  await loadDiag();
+  await loadDiagnostics();
 }
 
 async function loadAlerts(){
   try {
-    const r = await callGET({ type:'alerts', ts: Date.now() });
+    const r = await getAPI({ type:'alerts', t:Date.now() });
     const j = await r.json();
     const rows = j.data || [];
     const tbody = document.getElementById('alerts'); tbody.innerHTML = '';
-    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7">No alerts</td></tr>'; return; }
+    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="7">No alerts</td></tr>'; return; }
     rows.slice(0,15).forEach(a=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${new Date(a.timestamp).toLocaleString()}</td>
-                      <td>${a.coin||''}</td>
+                      <td><a href="${a.link||'#'}" target="_blank">${a.coin||''}</a></td>
                       <td>${a.symbol||''}</td>
                       <td>${a.confidence||''}</td>
-                      <td>₹${fmt(a.entry)}</td>
-                      <td>₹${fmt(a.tp)}</td>
-                      <td>₹${fmt(a.stop)}</td>`;
+                      <td>₹${fmt(a.entry)}</td><td>₹${fmt(a.tp)}</td><td>₹${fmt(a.stop)}</td>`;
       tbody.appendChild(tr);
+      tr.querySelector('a')?.addEventListener('click', ()=> loadChart((a.symbol||'BTC') + 'USD'));
     });
-    if (rows[0]) loadChart((rows[0].symbol || 'BTC') + 'USD');
+    if (rows[0]) loadChart((rows[0].symbol||'BTC') + 'USD');
   } catch(e){ console.error(e); }
 }
 
-async function loadDiag(){
+async function loadDiagnostics(){
   try {
-    const r = await callGET({ type:'diagnostics', ts: Date.now() });
+    const r = await getAPI({ type:'diagnostics', t:Date.now() });
     const txt = await r.text();
     document.getElementById('diag').textContent = txt;
   } catch(e){ console.error(e); }
 }
 
-function fmt(v){ try { return Number(v).toLocaleString('en-IN', { maximumFractionDigits: 4 }); } catch(_) { return v; } }
+function fmt(v){ try { return Number(v).toLocaleString('en-IN',{maximumFractionDigits:4}); } catch(e){ return v; } }
 
 document.getElementById('start').addEventListener('click', async ()=>{
   const strat = document.getElementById('strategy').value;
-  await callGET({ type:'start', strategy: strat });
-  await refresh();
+  await getAPI({ type:'start', strategy: strat });
+  await refreshAll();
 });
-document.getElementById('stop').addEventListener('click', async ()=>{
-  await callGET({ type:'stop' }); await refresh();
-});
-document.getElementById('manual').addEventListener('click', async ()=>{
-  await callGET({ type:'manualScan' }); await refresh();
-});
-document.getElementById('refresh').addEventListener('click', async ()=>{ await refresh(); });
+document.getElementById('stop').addEventListener('click', async ()=>{ await getAPI({ type:'stop' }); await refreshAll(); });
+document.getElementById('manual').addEventListener('click', async ()=>{ await getAPI({ type:'manualScan' }); await refreshAll(); });
+document.getElementById('refresh').addEventListener('click', async ()=>{ await refreshAll(); });
 
 function loadChart(sym){
   const s = (sym||'BTCUSD').replace(/[^A-Za-z0-9]/g,'');
   document.getElementById('chart').src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${encodeURIComponent(s)}&interval=60&theme=dark`;
 }
 
-(async function init(){
-  await refresh();
-  setInterval(refresh, 15000);
-})();
+(async function init(){ await refreshAll(); setInterval(refreshAll, 15000); })();
 </script>
 </body>
 </html>
