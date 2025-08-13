@@ -3,26 +3,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Mitra Signal Dashboard</title>
+<title>Mitra Signals — Dashboard</title>
 <style>
-:root{
-  --bg:#071029; --card:#0f1724; --muted:#9fb4ff; --accent:#4da3ff; --ok:#10b981; --warn:#f59e0b;
-  --glass: rgba(255,255,255,0.04);
-}
-body{margin:0;background:linear-gradient(180deg,#071029,#081025);font-family:Inter,system-ui,Arial;color:#e6f0ff}
-.header{padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.03)}
-.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#324fd6,#19b3ff);display:flex;align-items:center;justify-content:center;font-weight:800}
-.title{font-size:18px}
+:root{--bg:#071029;--card:#0f1724;--muted:#9fb4ff;--accent:#4da3ff;--chip:#0b1630}
+body{margin:0;background:linear-gradient(180deg,#071029,#081025);color:#e6f0ff;font-family:Inter,system-ui,Arial}
+.header{display:flex;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.02)}
+.logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#324fd6,#19b3ff);display:flex;align-items:center;justify-content:center}
+.title{margin-left:12px;font-size:16px}
 .controls{margin-left:auto;display:flex;gap:8px}
-.btn{background:var(--accent);color:#031025;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-.card{background:var(--card);margin:18px; padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-.grid{display:grid;grid-template-columns:280px 1fr;gap:18px}
-.kv{display:flex;flex-direction:column;gap:6px}
-.kv .label{color:#9fb4ff;font-size:12px}
-.kv .value{font-weight:700;font-size:20px}
-.list{max-height:560px;overflow:auto}
-.list .row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.02);align-items:center}
-.small{font-size:12px;color:#9fb4ff}
+.btn{background:var(--accent);color:#021022;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
+.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.small{font-size:12px;color:#a9c2ff}
+.list{max-height:520px;overflow:auto}
+.item{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid rgba(255,255,255,0.02)}
 .table{width:100%;border-collapse:collapse}
 .table th{color:#9fb4ff;text-align:left;padding:8px}
 .table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
@@ -35,146 +29,137 @@ body{margin:0;background:linear-gradient(180deg,#071029,#081025);font-family:Int
     <div class="logo">M</div>
     <div class="title">Mitra Signals — Dashboard</div>
     <div class="controls">
-      <select id="strategySelect">
+      <select id="strategy">
         <option value="MomentumBurst">Momentum Burst</option>
         <option value="BreakoutPullback">Breakout Pullback</option>
         <option value="MeanReversion">Mean Reversion</option>
       </select>
-      <button id="startBtn" class="btn">Start</button>
-      <button id="stopBtn" class="btn" style="background:#ff6b6b">Stop</button>
-      <button id="scanBtn" class="btn" style="background:#1f2937;color:#fff">Manual Scan</button>
+      <button id="start" class="btn">Start</button>
+      <button id="stop" class="btn" style="background:#ff6b6b">Stop</button>
+      <button id="manual" class="btn" style="background:#334155">Manual Scan</button>
     </div>
   </div>
 
   <div class="grid">
-    <div style="padding:18px">
-      <div class="card kv">
-        <div class="label">Engine Status</div>
-        <div id="engineStatus" class="value">—</div>
-        <div class="small">Active Strategy: <span id="activeStrategy">—</span></div>
+    <div>
+      <div class="card">
+        <div class="small">Engine Status</div>
+        <div id="status" style="font-weight:700;font-size:18px">—</div>
+        <div class="small" style="margin-top:8px">Active Strategy: <span id="active">—</span></div>
       </div>
 
-      <div class="card kv" style="margin-top:12px">
-        <div class="label">Today Alerts</div>
-        <div id="todayCount" class="value">0</div>
-        <div class="small">Top alerts and diagnostics below</div>
+      <div class="card" style="margin-top:12px">
+        <div class="small">Today Alerts</div>
+        <div id="today" style="font-weight:700;font-size:18px">0</div>
       </div>
 
       <div class="card" style="margin-top:12px">
         <div class="small">Diagnostics</div>
-        <pre id="diag" style="height:300px;overflow:auto;background:transparent;border:none;padding:8px;color:#cfe6ff"></pre>
+        <pre id="diag" style="height:360px;overflow:auto;color:#cfe6ff"></pre>
       </div>
     </div>
 
-    <div style="padding:18px">
+    <div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div><strong>Recent Alerts</strong><div class="small">Top 15 (most recent)</div></div>
-          <div>
-            <button id="refreshBtn" class="btn" style="background:#2b6cff">Refresh</button>
-          </div>
+          <div><button id="refresh" class="btn">Refresh</button></div>
         </div>
+
         <table class="table" style="margin-top:12px">
-          <thead><tr><th>Time</th><th>Coin</th><th>Sym</th><th>Conf</th><th>Entry</th><th>TP</th><th>SL</th><th>Exchange</th></tr></thead>
-          <tbody id="alertsTable"></tbody>
+          <thead><tr><th>Time</th><th>Coin</th><th>Sym</th><th>Conf</th><th>Entry</th><th>TP</th><th>SL</th></tr></thead>
+          <tbody id="alerts"></tbody>
         </table>
       </div>
 
       <div class="card" style="margin-top:12px">
-        <div class="small">Live Chart — click a symbol to open on TradingView</div>
-        <iframe id="chartFrame" style="width:100%;height:420px;border:0;margin-top:8px"></iframe>
+        <div class="small">Live Chart</div>
+        <iframe id="chart" style="width:100%;height:420px;border:0;margin-top:8px"></iframe>
       </div>
     </div>
   </div>
 
-  <div class="footer">Engine polls every 5 minutes, uses server-side CoinGecko key and caching (no keys in browser).</div>
+  <div class="footer">Engine polls every 5 minutes • Keys are server-side only</div>
 
 <script>
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxi2iD44e_wBojx2Tz1fQxgFvTUZXuEjfsWCceG6j4hy_qTYsN3wld_SC4eHXdNp39V/exec';
 
-async function doGet(q){
-  const url = new URL(WEB_APP_URL);
-  Object.keys(q||{}).forEach(k => url.searchParams.set(k, q[k]));
-  const res = await fetch(url.toString(), { cache:'no-store' });
+async function callGET(params){
+  const u = new URL(WEB_APP_URL);
+  Object.keys(params||{}).forEach(k => u.searchParams.set(k, params[k]));
+  const res = await fetch(u.toString(), { cache:'no-store' });
   return res;
 }
 
-async function refreshStatus(){
+async function refresh(){
   try {
-    const r = await doGet({ type:'status' });
-    const json = await r.json();
-    if (json && json.ok){
-      const s = json.state;
-      document.getElementById('engineStatus').textContent = s.isRunning ? 'Running' : 'Stopped';
-      document.getElementById('activeStrategy').textContent = s.activeStrategy;
-      document.getElementById('todayCount').textContent = s.todayCount || 0;
-      document.getElementById('strategySelect').value = s.activeStrategy || 'MomentumBurst';
+    const r = await callGET({ type:'status', ts: Date.now() });
+    const j = await r.json();
+    if (j && j.success !== false && j.data){
+      const s = j.data;
+      document.getElementById('status').textContent = s.isRunning ? 'Running' : 'Stopped';
+      document.getElementById('active').textContent = s.activeStrategy;
+      document.getElementById('today').textContent = s.todayCount || 0;
+      document.getElementById('strategy').value = s.activeStrategy || 'MomentumBurst';
     }
   } catch(e){ console.error(e); }
+  await loadAlerts();
+  await loadDiag();
 }
 
-async function refreshAlerts(){
+async function loadAlerts(){
   try {
-    const r = await doGet({ type:'alerts' });
-    const json = await r.json();
-    const rows = json.alerts || [];
-    const tbody = document.getElementById('alertsTable');
-    tbody.innerHTML = '';
-    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8">No alerts</td></tr>'; return; }
-    rows.slice(0,15).forEach(a => {
+    const r = await callGET({ type:'alerts', ts: Date.now() });
+    const j = await r.json();
+    const rows = j.data || [];
+    const tbody = document.getElementById('alerts'); tbody.innerHTML = '';
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7">No alerts</td></tr>'; return; }
+    rows.slice(0,15).forEach(a=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${new Date(a.timestamp).toLocaleString()}</td>
-                      <td><a href="${a.link||'#'}" target="_blank">${a.coin||''}</a></td>
+                      <td>${a.coin||''}</td>
                       <td>${a.symbol||''}</td>
                       <td>${a.confidence||''}</td>
-                      <td>₹${a.entry ? Number(a.entry).toLocaleString('en-IN',{maximumFractionDigits:4}) : ''}</td>
-                      <td>₹${a.tp ? Number(a.tp).toLocaleString('en-IN',{maximumFractionDigits:4}) : ''}</td>
-                      <td>₹${a.stop ? Number(a.stop).toLocaleString('en-IN',{maximumFractionDigits:4}) : ''}</td>
-                      <td>${a.exchange||''}</td>`;
-      tr.querySelector('a')?.addEventListener('click', ()=> loadChart((a.symbol||'BTC') + 'USD'));
+                      <td>₹${fmt(a.entry)}</td>
+                      <td>₹${fmt(a.tp)}</td>
+                      <td>₹${fmt(a.stop)}</td>`;
       tbody.appendChild(tr);
     });
+    if (rows[0]) loadChart((rows[0].symbol || 'BTC') + 'USD');
   } catch(e){ console.error(e); }
 }
 
-async function refreshDiagnostics(){
+async function loadDiag(){
   try {
-    const r = await doGet({ type:'diagnostics' });
+    const r = await callGET({ type:'diagnostics', ts: Date.now() });
     const txt = await r.text();
     document.getElementById('diag').textContent = txt;
   } catch(e){ console.error(e); }
 }
 
+function fmt(v){ try { return Number(v).toLocaleString('en-IN', { maximumFractionDigits: 4 }); } catch(_) { return v; } }
+
+document.getElementById('start').addEventListener('click', async ()=>{
+  const strat = document.getElementById('strategy').value;
+  await callGET({ type:'start', strategy: strat });
+  await refresh();
+});
+document.getElementById('stop').addEventListener('click', async ()=>{
+  await callGET({ type:'stop' }); await refresh();
+});
+document.getElementById('manual').addEventListener('click', async ()=>{
+  await callGET({ type:'manualScan' }); await refresh();
+});
+document.getElementById('refresh').addEventListener('click', async ()=>{ await refresh(); });
+
 function loadChart(sym){
   const s = (sym||'BTCUSD').replace(/[^A-Za-z0-9]/g,'');
-  const src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${encodeURIComponent(s)}&interval=60&hidesidetoolbar=1&theme=dark`;
-  document.getElementById('chartFrame').src = src;
+  document.getElementById('chart').src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${encodeURIComponent(s)}&interval=60&theme=dark`;
 }
 
-document.getElementById('startBtn').addEventListener('click', async ()=>{
-  const strat = document.getElementById('strategySelect').value;
-  await doGet({ type:'start', strategy: strat });
-  await refreshStatus(); await refreshAlerts(); await refreshDiagnostics();
-});
-document.getElementById('stopBtn').addEventListener('click', async ()=>{
-  await doGet({ type:'stop' });
-  await refreshStatus(); await refreshDiagnostics();
-});
-document.getElementById('scanBtn').addEventListener('click', async ()=>{
-  await doGet({ type:'manualScan' });
-  await refreshStatus(); await refreshAlerts(); await refreshDiagnostics();
-});
-document.getElementById('refreshBtn').addEventListener('click', async ()=>{
-  await refreshAlerts(); await refreshDiagnostics(); await refreshStatus();
-});
-
 (async function init(){
-  await refreshStatus();
-  await refreshAlerts();
-  await refreshDiagnostics();
-  setInterval(refreshStatus, 15000);
-  setInterval(refreshAlerts, 20000);
-  setInterval(refreshDiagnostics, 30000);
+  await refresh();
+  setInterval(refresh, 15000);
 })();
 </script>
 </body>
