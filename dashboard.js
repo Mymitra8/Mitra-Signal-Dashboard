@@ -43,3 +43,4 @@ async function fetchAlerts() {
 }
 
 window.onload = fetchAlerts;
+
