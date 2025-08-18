@@ -1,176 +1,167 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8">
-<title>Mitra Signals — Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  :root{
-    --bg:#0e1623; --panel:#101c2c; --text:#e6eefc; --muted:#9fb3d1;
-    --brand:#2d8cff; --ok:#0ac779; --warn:#ffb100; --bad:#ff6b6b;
-    --table:#0b1320; --row:#0f1a2b;
-  }
-  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Arial}
-  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1b2a40}
-  h1{font-size:18px;margin:0}
-  .controls{display:flex;gap:8px;align-items:center}
-  select,button{background:#12223a;color:var(--text);border:1px solid #24374f;border-radius:6px;padding:8px 10px}
-  button:hover{filter:brightness(1.1)}
-  .grid{display:grid;grid-template-columns:280px 1fr;gap:16px;padding:16px}
-  .card{background:var(--panel);border:1px solid #1b2a40;border-radius:10px;padding:14px}
-  .title{font-weight:700;margin-bottom:8px}
-  .kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;white-space:pre-wrap;word-break:break-word}
-  table{width:100%;border-collapse:collapse;background:var(--table);border-radius:8px;overflow:hidden}
-  th,td{padding:10px;border-bottom:1px solid #15243a;text-align:left}
-  th{font-weight:600;background:#0b1629;color:#9ab6df}
-  tr:nth-child(even){background:var(--row)}
-  .chip{padding:2px 8px;border-radius:999px;border:1px solid #2b4261;background:#12243c;color:#b9d3f8}
-  .ok{color:#0fe18a}.bad{color:#ff6b6b}.muted{color:var(--muted)}
-  a.link{color:var(--brand);text-decoration:none}
-</style>
+  <meta charset="UTF-8">
+  <title>Mitra Signals Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #283593;
+      color: #fff;
+      padding: 1rem 2rem;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #283593;
+    }
+    button {
+      background: #283593;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3f51b5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    th {
+      background: #eee;
+    }
+    .status {
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+    select {
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <h1>Mitra Signals — Dashboard</h1>
-  <div class="controls">
-    <select id="strategy">
-      <option>MomentumBurst</option>
-      <option>TrendRider</option>
-      <option>VolumeSurge</option>
-      <option>MeanRevertSnap</option>
-    </select>
-    <button id="startBtn">Start</button>
-    <button id="stopBtn">Stop</button>
-    <button id="manualBtn">Manual Scan</button>
-    <button id="refreshBtn">Refresh</button>
+  <header>Mitra Signals — Dashboard</header>
+  <div class="container">
+    
+    <!-- Engine Control -->
+    <div class="card">
+      <h2>Engine Control</h2>
+      <button onclick="api('start')">▶ Start</button>
+      <button onclick="api('stop')">⏸ Stop</button>
+      <button onclick="api('manual')">⚡ Manual Tick</button>
+      <div class="status" id="engineStatus">Loading status...</div>
+      <label>Strategy:
+        <select id="strategySelect" onchange="changeStrategy()">
+          <option>MomentumBurst</option>
+          <option>TrendRider</option>
+          <option>VolumeSurge</option>
+          <option>MeanRevertSnap</option>
+        </select>
+      </label>
+    </div>
+    
+    <!-- Diagnostics -->
+    <div class="card">
+      <h2>Diagnostics</h2>
+      <pre id="diagBox">Loading...</pre>
+    </div>
+    
+    <!-- Alerts -->
+    <div class="card" style="grid-column: span 2;">
+      <h2>Latest Alerts</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th><th>Coin</th><th>Sym</th>
+            <th>Price</th><th>Conf%</th><th>Entry</th><th>TP</th><th>SL</th>
+            <th>Strat</th><th>Timeline</th>
+          </tr>
+        </thead>
+        <tbody id="alertsTable"></tbody>
+      </table>
+    </div>
+    
   </div>
-</header>
+  
+  <script>
+    const base = ScriptApp.getService().getUrl ? ScriptApp.getService().getUrl() : ''; 
+    // If deployed, replace with your Web App URL:
+    // const base = 'https://script.google.com/macros/s/AKfycbxxxx/exec';
 
-<div class="grid">
-  <div class="card">
-    <div class="title">Engine Status</div>
-    <div id="engine" class="mono muted">—</div>
-    <div class="title" style="margin-top:16px">Today Alerts</div>
-    <div id="today" class="chip">0</div>
-
-    <div class="title" style="margin-top:16px">Diagnostics</div>
-    <div id="diag" class="mono" style="font-size:12px">—</div>
-
-    <div class="title" style="margin-top:16px">Options</div>
-    <label class="mono" style="font-size:12px"><input type="checkbox" id="forcePublic"> Force public API</label>
-    <button id="applyBtn" style="margin-top:8px">Apply</button>
-  </div>
-
-  <div class="card">
-    <div class="title">Recent Alerts (Top 15)</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Time</th><th>Coin</th><th>Sym</th><th>Conf</th>
-          <th>Entry</th><th>TP</th><th>SL</th><th>Strategy</th><th>Timeline</th>
-        </tr>
-      </thead>
-      <tbody id="alerts"><tr><td colspan="9" class="muted">No alerts</td></tr></tbody>
-    </table>
-
-    <div class="title" style="margin-top:20px">Live Chart (click a symbol)</div>
-    <div id="chart" class="mono muted">—</div>
-  </div>
-</div>
-
-<script>
-  // YOUR new Web App URL (exec endpoint)
-  const GS_URL = "https://script.google.com/macros/s/AKfycbyb-uWucZ1i4DGn8uDQKaBtGTyWzSmJ6xshABZ5nK92Alzo7e1nbl4QuZOBIjVUMBNL/exec";
-
-  const els = {
-    alerts: document.getElementById('alerts'),
-    engine: document.getElementById('engine'),
-    today:  document.getElementById('today'),
-    diag:   document.getElementById('diag'),
-    strategy: document.getElementById('strategy'),
-    startBtn: document.getElementById('startBtn'),
-    stopBtn: document.getElementById('stopBtn'),
-    manualBtn: document.getElementById('manualBtn'),
-    refreshBtn: document.getElementById('refreshBtn'),
-    forcePublic: document.getElementById('forcePublic'),
-    applyBtn: document.getElementById('applyBtn'),
-    chart: document.getElementById('chart')
-  };
-
-  function fmtTime(x){
-    const d = new Date(x);
-    if (isNaN(d)) return '-';
-    return d.toLocaleString();
-  }
-  function td(v){ const td = document.createElement('td'); td.textContent = v; return td; }
-
-  async function api(type, params={}){
-    const q = new URLSearchParams({type, ...params}).toString();
-    const r = await fetch(GS_URL + "?" + q, {cache:'no-store'});
-    return r.json();
-  }
-
-  async function loadDiag(){
-    try{
-      const j = await api('diagnostics');
-      if (!j || !j.success) throw new Error('bad diag');
-      els.engine.textContent = j.data.isRunning ? 'Running' : 'Stopped';
-      els.today.textContent = j.data.dailyAlerts;
-      els.strategy.value = j.data.activeStrategy;
-      els.forcePublic.checked = !!j.data.forcePublic;
-      els.diag.textContent = JSON.stringify(j.data, null, 2);
-    }catch(e){
-      els.diag.textContent = 'Diagnostics failed';
+    async function api(type) {
+      const res = await fetch(base + '?type=' + type);
+      const js = await res.json();
+      console.log(type, js);
+      loadDiagnostics();
+      if(type==='alerts'||type==='manual') loadAlerts();
+      if(type==='start'||type==='stop') loadDiagnostics();
     }
-  }
-
-  async function loadAlerts(){
-    try{
-      const j = await api('alerts');
-      const arr = (j && j.alerts) ? j.alerts.slice(0,15) : [];
-      els.alerts.innerHTML = '';
-      if (arr.length === 0){
+    
+    async function loadDiagnostics() {
+      const res = await fetch(base + '?type=diagnostics');
+      const js = await res.json();
+      document.getElementById('diagBox').innerText = JSON.stringify(js.data,null,2);
+      document.getElementById('engineStatus').innerText = 
+        'Running: ' + js.data.isRunning + ' | Strategy: ' + js.data.activeStrategy;
+      document.getElementById('strategySelect').value = js.data.activeStrategy;
+    }
+    
+    async function loadAlerts() {
+      const res = await fetch(base + '?type=alerts');
+      const js = await res.json();
+      const tbody = document.getElementById('alertsTable');
+      tbody.innerHTML = '';
+      js.alerts.forEach(a=>{
         const tr = document.createElement('tr');
-        const td1 = document.createElement('td'); td1.colSpan=9; td1.textContent = 'No alerts';
-        td1.className = 'muted'; tr.appendChild(td1); els.alerts.appendChild(tr); return;
-      }
-      arr.forEach(a=>{
-        const tr = document.createElement('tr');
-        tr.appendChild(td(fmtTime(a.time)));
-        tr.appendChild(td(a.coin||'-'));
-        const sy = document.createElement('td');
-        sy.innerHTML = `<a class="link" href="https://www.tradingview.com/chart/?symbol=${(a.sym||'').toUpperCase()}USD" target="_blank">${(a.sym||'').toUpperCase()}</a>`;
-        tr.appendChild(sy);
-        tr.appendChild(td((a.conf||0) + '%'));
-        tr.appendChild(td('$' + Number(a.entry||0).toFixed(4)));
-        tr.appendChild(td('$' + Number(a.tp||0).toFixed(4)));
-        tr.appendChild(td('$' + Number(a.sl||0).toFixed(4)));
-        tr.appendChild(td(a.strategy||'-'));
-        tr.appendChild(td(a.timeline||'-'));
-        els.alerts.appendChild(tr);
+        tr.innerHTML = `<td>${a.time}</td><td>${a.coin}</td><td>${a.sym}</td>
+                        <td>${a.price}</td><td>${a.conf}</td>
+                        <td>${a.entry}</td><td>${a.tp}</td><td>${a.sl}</td>
+                        <td>${a.strategy}</td><td>${a.timeline}</td>`;
+        tbody.appendChild(tr);
       });
-    }catch(e){
-      alert('Fetch failed: ' + e.message);
     }
-  }
-
-  els.refreshBtn.onclick = ()=>{ loadDiag(); loadAlerts(); };
-  els.startBtn.onclick   = async ()=>{
-    await api('start', {strategy: els.strategy.value});
-    await loadDiag();
-  };
-  els.stopBtn.onclick    = async ()=>{ await api('stop'); await loadDiag(); };
-  els.manualBtn.onclick  = async ()=>{ await api('manual'); await loadAlerts(); };
-  els.applyBtn.onclick   = async ()=>{
-    await api('admin', {forcePublic: els.forcePublic.checked});
-    await loadDiag();
-  };
-
-  // initial
-  loadDiag().then(loadAlerts);
-  // auto refresh every 60s
-  setInterval(()=>{ loadDiag(); loadAlerts(); }, 60000);
-</script>
+    
+    function changeStrategy(){
+      const strat = document.getElementById('strategySelect').value;
+      api('changeStrategy&strategy='+encodeURIComponent(strat));
+    }
+    
+    // Auto-refresh
+    loadDiagnostics(); loadAlerts();
+    setInterval(loadDiagnostics, 15000);
+    setInterval(loadAlerts, 20000);
+  </script>
 </body>
 </html>
