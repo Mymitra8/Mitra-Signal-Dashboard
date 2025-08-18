@@ -1,36 +1,204 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Mitra Signal Dashboard 🚀</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mitra Signals — Dashboard</title>
+<style>
+:root{--bg:#071029;--card:#0f1724;--muted:#9fb4ff;--accent:#4da3ff}
+body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#071029,#081025);color:#e6f0ff}
+.header{display:flex;align-items:center;padding:12px 18px;background:rgba(255,255,255,0.02)}
+.logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#324fd6,#19b3ff);display:flex;align-items:center;justify-content:center}
+.title{margin-left:12px;font-weight:700}
+.controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{background:var(--accent);color:#021022;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px}
+.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.small{font-size:12px;color:#9fb4ff}
+.table{width:100%;border-collapse:collapse}
+.table th{color:#9fb4ff;text-align:left;padding:8px}
+.table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.05)}
+pre{white-space:pre-wrap;word-wrap:break-word}
+.admin{display:flex;gap:8px;align-items:center;margin-top:8px}
+@media(max-width:900px){ .grid{grid-template-columns:1fr} }
+</style>
 </head>
 <body>
-  <div id="app">
-    <h2>Mitra Signals — Dashboard</h2>
+  <div class="header">
+    <div class="logo">M</div>
+    <div class="title">Mitra Signals — Dashboard</div>
+    <div class="controls">
+      <select id="strategy">
+        <option value="MomentumBurst">Momentum Burst</option>
+        <option value="BreakoutPullback">Breakout Pullback</option>
+        <option value="MeanReversion">Mean Reversion</option>
+      </select>
+      <button id="start" class="btn">Start</button>
+      <button id="stop" class="btn" style="background:#ff6b6b">Stop</button>
+      <button id="manual" class="btn" style="background:#334155">Manual Scan</button>
+    </div>
+  </div>
+
+  <div class="grid">
     <div>
-      <label for="strategy">Select Strategy:</label>
-      <select id="strategy"></select>
-      <button onclick="fetchAlerts()">Refresh</button>
+      <div class="card">
+        <div class="small">Engine Status</div>
+        <div id="status" style="font-weight:700;font-size:18px">—</div>
+        <div class="small" style="margin-top:8px">Active Strategy: <span id="active">—</span></div>
+        <div style="margin-top:8px" class="small">Last API: <span id="lastApi">—</span></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">Today Alerts</div>
+        <div id="today" style="font-weight:700;font-size:18px">0</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">Diagnostics</div>
+        <pre id="diag" style="height:260px;overflow:auto;color:#cfe6ff"></pre>
+
+        <div class="admin">
+          <input id="adminKey" placeholder="ADMIN_KEY" style="padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#e6f0ff"/>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="forcePublic"> Force Public API
+          </label>
+          <button id="applyForce" class="btn" style="background:#2b6cb0">Apply</button>
+        </div>
+
+      </div>
     </div>
 
-    <h3>Live Trade Alerts</h3>
-    <table id="alerts">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Strategy</th>
-          <th>Coin</th>
-          <th>Symbol</th>
-          <th>Conf</th>
-          <th>Entry</th>
-          <th>TP</th>
-          <th>SL</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>Recent Alerts</strong><div class="small">Top 15 (most recent)</div></div>
+          <div><button id="refresh" class="btn">Refresh</button></div>
+        </div>
+
+        <table class="table" style="margin-top:12px">
+          <thead><tr><th>Time</th><th>Coin</th><th>Sym</th><th>Conf</th><th>Entry</th><th>TP</th><th>SL</th></tr></thead>
+          <tbody id="alerts"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <div class="small">Live Chart (click a symbol)</div>
+        <iframe id="chart" style="width:100%;height:420px;border:0;margin-top:8px"></iframe>
+      </div>
+    </div>
   </div>
-  <script src="dashboard.js"></script>
-</body>
-</html>
+
+<script>
+/* ===== YOUR LIVE GOOGLE SCRIPT URL ===== */
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyb-uWucZ1i4DGn8uDQKaBtGTyWzSmJ6xshABZ5nK92Alzo7e1nbl4QuZOBIjVUMBNL/exec';
+/* ====================================== */
+
+async function apiGet(params){
+  const u = new URL(WEB_APP_URL);
+  Object.keys(params||{}).forEach(k => u.searchParams.set(k, params[k]));
+  const r = await fetch(u.toString(), { cache:'no-store' });
+  // Graceful handling of non-JSON (e.g., 404/HTML)
+  const ct = r.headers.get('content-type') || '';
+  if (!ct.includes('application/json')){
+    const text = await r.text().catch(()=> '');
+    throw new Error('Unexpected response (not JSON): ' + text.slice(0,200));
+  }
+  return r.json();
+}
+
+function fmt(v){ try { return Number(v).toLocaleString('en-IN',{maximumFractionDigits:4}); } catch(e){ return v; } }
+
+async function refreshAll(){
+  try {
+    const j = await apiGet({ type:'status', t:Date.now() });
+    if (j && j.success !== false && j.data){
+      document.getElementById('status').textContent = j.data.isRunning ? 'Running' : 'Stopped';
+      document.getElementById('active').textContent = j.data.activeStrategy || '-';
+      document.getElementById('today').textContent = j.data.todayCount || 0;
+      document.getElementById('strategy').value = j.data.activeStrategy || 'MomentumBurst';
+    }
+  } catch(e){ console.error(e); }
+  await loadAlerts();
+  await loadDiagnosticsJSON();
+}
+
+async function loadAlerts(){
+  const tbody = document.getElementById('alerts'); tbody.innerHTML = '';
+  try {
+    const j = await apiGet({ type:'alerts', t:Date.now() });
+    const rows = Array.isArray(j && j.data) ? j.data : [];
+    if (!rows.length){
+      tbody.innerHTML = '<tr><td colspan="7">No alerts</td></tr>';
+      document.getElementById('lastApi').textContent = 'No alerts yet';
+      return;
+    }
+    rows.slice(0,15).forEach(a=>{
+      const tr = document.createElement('tr');
+      const ts = a.timestamp ? new Date(a.timestamp).toLocaleString() : '-';
+      tr.innerHTML = `<td>${ts}</td>
+                      <td><a href="${a.link||'#'}" target="_blank" data-sym="${a.symbol||'BTC'}">${a.coin||''}</a></td>
+                      <td>${a.symbol||''}</td>
+                      <td>${a.confidence||''}</td>
+                      <td>₹${fmt(a.entry)}</td>
+                      <td>₹${fmt(a.tp)}</td>
+                      <td>₹${fmt(a.stop)}</td>`;
+      tbody.appendChild(tr);
+      const aTag = tr.querySelector('a');
+      aTag && aTag.addEventListener('click', (ev)=> {
+        const sym = ev.currentTarget.getAttribute('data-sym') || 'BTC';
+        loadChart(sym + 'USD');
+      });
+    });
+    if (rows[0]) loadChart((rows[0].symbol||'BTC') + 'USD');
+    document.getElementById('lastApi').textContent = 'Alerts loaded';
+  } catch(e){
+    console.error(e);
+    tbody.innerHTML = '<tr><td colspan="7">Failed to load alerts</td></tr>';
+    document.getElementById('lastApi').textContent = 'Alerts load failed';
+  }
+}
+
+async function loadDiagnosticsJSON(){
+  try {
+    const j = await apiGet({ type:'diagnosticsJSON', t:Date.now() });
+    const arr = Array.isArray(j && j.data) ? j.data : [];
+    document.getElementById('diag').textContent = arr.map(x => `${x.ts} [${x.level}] ${x.msg}`).join('\n');
+    document.getElementById('forcePublic').checked = arr.some(x => (x.msg||'').includes('Forcing public API'));
+  } catch(e){ console.error(e); }
+}
+
+document.getElementById('start').addEventListener('click', async ()=>{
+  const strat = (document.getElementById('strategy').value)||'MomentumBurst';
+  try { await apiGet({ type:'start', strategy: strat }); } catch(e){ alert('Start failed: '+e.message); }
+  await refreshAll();
+});
+document.getElementById('stop').addEventListener('click', async ()=>{
+  try { await apiGet({ type:'stop' }); } catch(e){ alert('Stop failed: '+e.message); }
+  await refreshAll();
+});
+document.getElementById('manual').addEventListener('click', async ()=>{
+  try { await apiGet({ type:'manualScan' }); } catch(e){ alert('Manual scan failed: '+e.message); }
+  await refreshAll();
+});
+document.getElementById('refresh').addEventListener('click', refreshAll);
+
+document.getElementById('applyForce').addEventListener('click', async ()=>{
+  const adminKey = document.getElementById('adminKey').value.trim();
+  if (!adminKey){ alert('Enter ADMIN_KEY to perform admin actions'); return; }
+  const force = document.getElementById('forcePublic').checked;
+  try {
+    const u = new URL(WEB_APP_URL);
+    u.searchParams.set('type','setProp');
+    u.searchParams.set('adminKey', adminKey);
+    u.searchParams.set('key', 'FORCE_PUBLIC');
+    u.searchParams.set('value', force ? 'true' : 'false');
+    const r = await fetch(u.toString(), { cache:'no-store' });
+    const j = await r.json().catch(()=> ({}));
+    if (j && j.success) { alert('Applied'); await refreshAll(); }
+    else { alert('Admin action failed: ' + (j && j.error)); }
+  } catch(e){ alert('Admin action error: ' + e.message); }
+});
+
+function loadChart(sym){
+  const s = (sym||'BTCUSD').replace(/[^A-Za-z0-9]/g,'');
+  document.getElementById('chart').src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${encodeURIComponent(s)}&interval
