@@ -5,7 +5,7 @@
   <title>Mitra Signals — Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
-    :root{--bg:#F6F9FF;--card:#ffffff;--accent:#0b5cff;--muted:#6b7280}
+    :root{--bg:#F6F9FF;--card:#fff;--accent:#0b5cff;--muted:#6b7280}
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:#0b1220}
     header{background:linear-gradient(90deg,var(--accent),#3b82f6);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -32,7 +32,16 @@
   <script>
     google.charts.load('current', {'packages':['corechart','table','bar']});
     google.charts.setOnLoadCallback(initDashboard);
+
     function initDashboard(){
+      // Only run when google charts & Apps Script environment are ready
+      if (typeof google === 'undefined' || typeof google.script === 'undefined') {
+        // Not running inside Apps Script HTMLService — inform user
+        document.addEventListener('DOMContentLoaded', function(){
+          document.body.innerHTML = '<div style="padding:20px;font-family:Arial">This dashboard must be opened via the <strong>Apps Script Web App URL</strong>. Open the Web App from the Apps Script deployment — do not open this file directly.</div>';
+        });
+        return;
+      }
       refreshAll();
       setInterval(refreshAll, 20000);
     }
@@ -45,12 +54,12 @@
   </header>
 
   <div class="wrap">
-    <!-- Left: controls & diagnostics -->
+    <!-- Controls -->
     <div class="card">
       <h3>Engine Control</h3>
       <div class="controls">
-        <button onclick="startEngine()">▶ Start</button>
-        <button class="alt" onclick="stopEngine()">⏸ Stop</button>
+        <button id="btnStart" onclick="startEngine()">▶ Start</button>
+        <button id="btnStop" class="alt" onclick="stopEngine()">⏸ Stop</button>
         <button onclick="manualTick()">⚡ Manual</button>
       </div>
 
@@ -71,13 +80,8 @@
 
       <h3 style="margin-top:14px">Quick Filters</h3>
       <div class="filters">
-        <select id="fStrategy" onchange="applyFilters()">
-          <option value="">All Strategies</option>
-          <option>MomentumBurst</option><option>TrendRider</option><option>VolumeSurge</option><option>MeanRevertSnap</option>
-        </select>
-        <select id="fDirection" onchange="applyFilters()">
-          <option value="">Any Direction</option><option>BUY</option><option>SELL</option>
-        </select>
+        <select id="fStrategy" onchange="applyFilters()"><option value="">All Strategies</option><option>MomentumBurst</option><option>TrendRider</option><option>VolumeSurge</option><option>MeanRevertSnap</option></select>
+        <select id="fDirection" onchange="applyFilters()"><option value="">Any Direction</option><option>BUY</option><option>SELL</option></select>
         <input type="text" id="q" placeholder="Search Coin / Symbol" oninput="applyFilters()" />
         <button onclick="clearFilters()">Clear</button>
       </div>
@@ -91,7 +95,7 @@
       </div>
     </div>
 
-    <!-- Right: chart + table -->
+    <!-- Chart + table -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div><h3>Latest Alerts</h3><div class="muted">Newest alerts near top. Tap Chart to open TradingView.</div></div>
@@ -114,19 +118,17 @@
   </div>
 
 <script>
-  // wrapper for google.script.run calls
   function gsRun(fn, callback){
     google.script.run.withSuccessHandler(function(res){ try { callback(res); } catch(e){ console.error(e); } })[fn]();
   }
 
-  // state for client filters
   let ALL_ALERTS = [];
 
   function refreshAll(){ loadDiagnostics(); fetchAlerts(); }
 
   function loadDiagnostics(){
     gsRun('api_getDiagnostics', function(js){
-      if (!js || !js.success) { document.getElementById('diag').innerText = 'Unable to fetch diagnostics'; document.getElementById('runningStatus').innerText = 'Unknown'; return; }
+      if (!js || !js.success){ document.getElementById('diag').innerText = 'Unable to fetch diagnostics'; document.getElementById('runningStatus').innerText = 'Unknown'; return; }
       const d = js.data;
       document.getElementById('diag').innerText = JSON.stringify(d, null, 2);
       document.getElementById('runningStatus').innerText = d.isRunning ? 'Running' : 'Stopped';
@@ -137,11 +139,10 @@
 
   function fetchAlerts(){
     gsRun('api_getAlerts', function(js){
-      if (!js || !js.success) { document.getElementById('alertsBody').innerHTML = '<tr><td colspan="13" class="muted">Failed to load alerts</td></tr>'; drawChart([]); return; }
+      if (!js || !js.success){ document.getElementById('alertsBody').innerHTML = '<tr><td colspan="13" class="muted">Failed to load alerts</td></tr>'; drawChart([]); return; }
       ALL_ALERTS = js.alerts || [];
-      // sort newest first by Timestamp
       ALL_ALERTS.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
-      applyFilters(); // will render table & chart
+      applyFilters();
     });
   }
 
@@ -194,35 +195,29 @@
     });
   }
 
-  // Draw summary chart using Google Charts
   function drawChart(alerts){
     try {
       const stratCounts = {};
-      const confBuckets = [0,20,40,60,80,100].map(()=>0);
-      alerts.forEach(a=>{
-        stratCounts[a.strategy] = (stratCounts[a.strategy]||0) + 1;
-        const c = Number(a.confidence||0);
-        const idx = Math.min(5, Math.floor(c/20));
-        confBuckets[idx] = confBuckets[idx] + 1;
-      });
+      alerts.forEach(a=>{ stratCounts[a.strategy] = (stratCounts[a.strategy]||0) + 1; });
       const data = new google.visualization.DataTable();
       data.addColumn('string','Strategy');
       data.addColumn('number','Count');
-      if (Object.keys(stratCounts).length === 0){
-        data.addRow(['No alerts',1]);
-      } else {
-        for (const s in stratCounts) data.addRow([s, stratCounts[s]]);
-      }
+      if (Object.keys(stratCounts).length === 0) data.addRow(['No alerts',1]);
+      else for (const s in stratCounts) data.addRow([s, stratCounts[s]]);
       const options = { title: 'Alerts by Strategy', pieHole: 0.4, height: 220, legend: { position: 'right' } };
       const chart = new google.visualization.PieChart(document.getElementById('chart_div'));
       chart.draw(data, options);
     } catch(e){ console.error('drawChart err', e); }
   }
 
-  // Engine controls
-  function startEngine(){ const strat = document.getElementById('strategy').value; google.script.run.withSuccessHandler(refreshAll).api_startEngine(strat); }
-  function stopEngine(){ google.script.run.withSuccessHandler(refreshAll).api_stopEngine(); }
-  function manualTick(){ google.script.run.withSuccessHandler(function(res){ alert('Manual run done. Sent: ' + (res.sent||0)); refreshAll(); }).api_manualTick(); }
+  // engine controls
+  function startEngine(){
+    if (typeof google === 'undefined' || typeof google.script === 'undefined') { alert('Open this dashboard via the Apps Script WebApp URL.'); return; }
+    const strat = document.getElementById('strategy').value;
+    google.script.run.withSuccessHandler(refreshAll).api_startEngine(strat);
+  }
+  function stopEngine(){ if (typeof google === 'undefined' || typeof google.script === 'undefined') { alert('Open via WebApp URL.'); return; } google.script.run.withSuccessHandler(refreshAll).api_stopEngine(); }
+  function manualTick(){ if (typeof google === 'undefined' || typeof google.script === 'undefined') { alert('Open via WebApp URL.'); return; } google.script.run.withSuccessHandler(function(res){ alert('Manual run done. Sent: ' + (res.sent||0)); refreshAll(); }).api_manualTick(); }
   function changeStrategy(){ const s = document.getElementById('strategy').value; google.script.run.withSuccessHandler(loadDiagnostics).api_changeStrategy(s); }
 
   function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI','_blank'); }
