@@ -7,11 +7,9 @@
   <style>
     :root{
       --bg: #f4f6fb;
-      --card: #ffffff;
+      --card: #fff;
       --accent: #1e40af;
       --muted: #6b7280;
-      --success: #10b981;
-      --danger: #ef4444;
       --glass: rgba(255,255,255,0.85);
     }
     html,body{ height:100%; margin:0; font-family: Inter, Roboto, Arial, sans-serif; background:var(--bg); color:#0f172a; }
@@ -35,20 +33,16 @@
     .right { display:flex; gap:8px; align-items:center; }
     footer{ text-align:center; padding:8px; color:var(--muted); font-size:12px; margin-top:12px; }
     .pill{ padding:6px 8px; border-radius:999px; background:#eef2ff; color:var(--accent); font-weight:600; font-size:12px; }
-    /* responsive */
-    @media (max-width:920px){
-      .wrap{ grid-template-columns:1fr; padding:12px; }
-    }
+    @media (max-width:920px){ .wrap{ grid-template-columns:1fr; padding:12px; } }
   </style>
 </head>
 <body>
   <header>
     <div class="title">Mitra Signals — Dashboard</div>
-    <div style="font-size:13px; opacity:.95">Connected to Sheet: <span id="sheetName" class="pill">Loading...</span></div>
+    <div style="font-size:13px; opacity:.95">Connected to Sheet: <span id="sheetName" class="pill">Trade Alerts</span></div>
   </header>
 
   <div class="wrap">
-    <!-- Left column: Controls -->
     <div class="card control">
       <h3>Engine Control</h3>
       <div class="row">
@@ -66,7 +60,7 @@
         </select>
       </div>
 
-      <div class="controls-row">
+      <div class="controls-row" style="margin-top:8px;">
         <div class="mini" id="runningStatus">Loading...</div>
         <div class="mini" id="alertsCount">Alerts today: 0</div>
       </div>
@@ -85,15 +79,14 @@
         </div>
       </div>
 
-      <footer>Engine tick every <span id="tickMinutes">5</span> minutes • Designed for Apps Script</footer>
+      <footer>Engine tick every <span id="tickMinutes">5</span> minutes • Apps Script</footer>
     </div>
 
-    <!-- Right column: Alerts table -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <div>
           <h3>Latest Alerts</h3>
-          <div class="small">Newest alerts are shown near the top. Click refresh to update.</div>
+          <div class="small">Newest alerts shown near top. Click Refresh to update.</div>
         </div>
         <div class="right">
           <button onclick="fetchAlerts()">Refresh</button>
@@ -101,7 +94,7 @@
         </div>
       </div>
 
-      <div style="overflow:auto; max-height:640px;">
+      <div style="overflow:auto; max-height:680px;">
         <table class="alerts-table" id="alertsTable">
           <thead>
             <tr>
@@ -117,39 +110,41 @@
   </div>
 
   <script>
-    // ========================= CONFIG - set to your deployed web app ========================
+    // CONFIG: the URL you gave
     const BASE_URL = 'https://script.google.com/macros/s/AKfycbyb-uWucZ1i4DGn8uDQKaBtGTyWzSmJ6xshABZ5nK92Alzo7e1nbl4QuZOBIjVUMBNL/exec';
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI';
     const REPO_URL = 'https://github.com/Mymitra8/Mitra-Signal-Dashboard';
 
-    // ========================= HTTP helpers ========================
     async function api(type, params=''){
       try{
-        const url = `${BASE_URL}?type=${type}${params ? '&' + params : ''}`;
+        const url = `${BASE_URL}?type=${type}${params ? '&' + params : ''}&_t=${Date.now()}`;
         const r = await fetch(url, { method:'GET', cache:'no-store' });
-        if (!r.ok) {
-          console.error('API returned', r.status, await r.text());
-          return null;
+        const text = await r.text();
+        // try parse JSON; if fails, return text in structured object
+        try {
+          const js = JSON.parse(text);
+          return js;
+        } catch(parseErr){
+          console.error('api error', parseErr, 'raw:', text);
+          return { success:false, error:'non-json response', raw: text, status: r.status };
         }
-        const js = await r.json();
-        return js;
       }catch(e){
-        console.error('api error', e);
-        return null;
+        console.error('api fetch error', e);
+        return { success:false, error: String(e) };
       }
     }
 
-    // ========================= UI bindings ========================
     async function loadDiagnostics(){
       const js = await api('diagnostics');
-      if (!js || !js.success) {
-        document.getElementById('diagBox').innerText = 'Unable to fetch diagnostics';
+      if (!js || !js.success){
+        document.getElementById('diagBox').innerText = 'Unable to fetch diagnostics.\n' + (js && js.raw ? js.raw : (js && js.error ? js.error : 'No response'));
+        document.getElementById('runningStatus').innerText = 'Unknown';
         return;
       }
       const d = js.data;
       document.getElementById('diagBox').innerText = JSON.stringify(d, null, 2);
       document.getElementById('runningStatus').innerText = d.isRunning ? 'Running' : 'Stopped';
-      document.getElementById('strategy').value = d.activeStrategy;
+      document.getElementById('strategy').value = d.activeStrategy || 'MomentumBurst';
       document.getElementById('alertsCount').innerText = 'Alerts today: ' + (d.dailyAlerts || 0);
       document.getElementById('tickMinutes').innerText = d.engineTickMinutes || 5;
     }
@@ -158,13 +153,14 @@
       const js = await api('alerts');
       const tbody = document.getElementById('alertsBody');
       tbody.innerHTML = '';
-      if (!js || !js.success || !js.alerts || !js.alerts.length) {
-        tbody.innerHTML = '<tr><td colspan="12" class="small">No alerts found</td></tr>';
+      if (!js || !js.success || !js.alerts || !js.alerts.length){
+        const raw = js && js.raw ? '\n\nRaw response:\n' + js.raw : '';
+        tbody.innerHTML = `<tr><td colspan="12" class="small">No alerts found.${raw}</td></tr>`;
         return;
       }
-      js.alerts.forEach(a=>{
+      js.alerts.forEach(function(a){
         const tr = document.createElement('tr');
-        const time = (a.timestamp) ? new Date(a.timestamp).toLocaleString() : '-';
+        const time = (a.timestamp) ? (new Date(a.timestamp)).toLocaleString() : '-';
         const entry = (a.entry !== undefined && a.entry !== null) ? Number(a.entry).toFixed(8) : '-';
         const tp = (a.tp !== undefined && a.tp !== null) ? Number(a.tp).toFixed(8) : '-';
         const sl = (a.stop !== undefined && a.stop !== null) ? Number(a.stop).toFixed(8) : '-';
@@ -187,35 +183,17 @@
     function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
     async function startEngine(){
-      await api('start', 'strategy=' + encodeURIComponent(document.getElementById('strategy').value));
+      const strat = document.getElementById('strategy').value;
+      await api('start', 'strategy=' + encodeURIComponent(strat));
       await loadDiagnostics(); fetchAlerts();
     }
-
-    async function stopEngine(){
-      await api('stop');
-      await loadDiagnostics(); fetchAlerts();
-    }
-
-    async function manualTick(){
-      const js = await api('manual');
-      if (js && js.success) {
-        alert('Manual scan completed. Sent: ' + (js.sent || 0));
-      } else {
-        alert('Manual scan failed. Check logs.');
-      }
-      await loadDiagnostics(); fetchAlerts();
-    }
-
-    async function changeStrategy(){
-      const s = document.getElementById('strategy').value;
-      await api('changeStrategy', 'strategy=' + encodeURIComponent(s));
-      await loadDiagnostics();
-    }
-
+    async function stopEngine(){ await api('stop'); await loadDiagnostics(); fetchAlerts(); }
+    async function manualTick(){ const js = await api('manual'); if (js && js.success) alert('Manual scan done. Sent:' + (js.sent||0)); else alert('Manual scan error. See diagnostics.'); await loadDiagnostics(); fetchAlerts(); }
+    async function changeStrategy(){ const s = document.getElementById('strategy').value; await api('changeStrategy', 'strategy=' + encodeURIComponent(s)); await loadDiagnostics(); }
     function openSheet(){ window.open(SHEET_URL, '_blank'); }
     function openRepo(){ window.open(REPO_URL, '_blank'); }
 
-    // Auto-refresh cycles
+    // boot
     loadDiagnostics();
     fetchAlerts();
     setInterval(loadDiagnostics, 15000);
