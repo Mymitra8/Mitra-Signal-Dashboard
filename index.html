@@ -20,8 +20,28 @@
     th,td{padding:8px;border-bottom:1px solid #f1f5f9;text-align:left;vertical-align:middle}
     th{background:#fbfdff;position:sticky;top:0;z-index:1;color:#41516a;font-weight:700;font-size:12px}
     .muted{color:var(--muted);font-size:13px}
+    .small{font-size:12px;color:#6b7280}
     @media(max-width:920px){.wrap{grid-template-columns:1fr}}
+    a.link { color:#1e4ed8; text-decoration:none; font-weight:600; }
   </style>
+  <!-- Load Google Charts loader.js (to fix google is not defined) -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    // Load packages we may use
+    google.charts.load('current', {'packages':['corechart','table']});
+    // After charts lib loaded, initialize the dashboard
+    google.charts.setOnLoadCallback(function(){
+      // initialize after google charts ready
+      initDashboard();
+    });
+
+    function initDashboard(){
+      // basic boot: fetch diagnostics, alerts, and draw chart
+      refreshAll();
+      // periodic refresh
+      setInterval(refreshAll, 20000);
+    }
+  </script>
 </head>
 <body>
   <header>
@@ -51,7 +71,7 @@
       <div style="margin-top:12px"><div style="display:flex;gap:8px;align-items:center"><div class="mini" id="runningStatus">Loading...</div><div class="mini" id="alertsCount">Alerts: 0</div></div></div>
 
       <h3 style="margin-top:14px">Diagnostics</h3>
-      <pre id="diag">Loading diagnostics...</pre>
+      <pre id="diag" class="small">Loading diagnostics...</pre>
 
       <div style="margin-top:12px;display:flex;gap:8px;">
         <button onclick="openSheet()">Open Sheet</button>
@@ -64,25 +84,37 @@
 
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><h3>Latest Alerts</h3><div class="muted">Newest alerts appear near the top. Refresh to update.</div></div>
+        <div>
+          <h3>Latest Alerts</h3>
+          <div class="muted">Newest alerts appear near the top. Click chart link to open TradingView in a new tab.</div>
+        </div>
         <div><button onclick="fetchAlerts()">Refresh</button></div>
       </div>
 
-      <div style="margin-top:12px;overflow:auto;max-height:680px">
-        <table>
-          <thead><tr><th>Time</th><th>Strategy</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th></tr></thead>
-          <tbody id="alertsBody"><tr><td colspan="12" class="muted">Loading...</td></tr></tbody>
-        </table>
+      <div style="margin-top:12px; display:grid; grid-template-rows:auto 1fr; gap:10px;">
+        <div id="chart_div" style="height:220px;"></div>
+        <div style="overflow:auto; max-height:420px;">
+          <table>
+            <thead><tr><th>Time</th><th>Strategy</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th><th>Chart</th></tr></thead>
+            <tbody id="alertsBody"><tr><td colspan="13" class="muted">Loading...</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
-  // All server calls via google.script.run (no fetch/CORS)
+  // safe wrapper for google.script.run calls
+  function gsRun(fn, callback){
+    google.script.run.withSuccessHandler(function(res){
+      try { callback(res); } catch(e){ console.error(e); }
+    })[fn]();
+  }
+
   function refreshAll(){ loadDiagnostics(); fetchAlerts(); }
 
   function loadDiagnostics(){
-    google.script.run.withSuccessHandler(function(js){
+    gsRun('api_getDiagnostics', function(js){
       if (!js || !js.success) {
         document.getElementById('diag').innerText = 'Unable to fetch diagnostics';
         document.getElementById('runningStatus').innerText = 'Unknown';
@@ -94,54 +126,104 @@
       document.getElementById('strategy').value = d.activeStrategy || 'MomentumBurst';
       document.getElementById('alertsCount').innerText = 'Alerts: ' + (d.dailyAlerts || 0);
       document.getElementById('tickMin').innerText = d.engineTickMinutes || 5;
-    }).api_getDiagnostics();
+    });
   }
 
   function fetchAlerts(){
-    google.script.run.withSuccessHandler(function(js){
+    gsRun('api_getAlerts', function(js){
       const body = document.getElementById('alertsBody');
       body.innerHTML = '';
-      if (!js || !js.success || !js.alerts || !js.alerts.length) {
-        body.innerHTML = '<tr><td colspan="12" class="muted">No alerts found.</td></tr>';
+      if (!js || !js.success || !js.alerts || !js.alerts.length){
+        body.innerHTML = '<tr><td colspan="13" class="muted">No alerts found.</td></tr>';
+        drawChart([]); // clear chart
         return;
       }
-      js.alerts.forEach(a=>{
+      // populate table rows and prepare chart data
+      const alerts = js.alerts;
+      alerts.forEach(a=>{
         const tr = document.createElement('tr');
         const time = a.timestamp ? (new Date(a.timestamp)).toLocaleString() : '-';
-        const entry = (a.entry!==undefined && a.entry!==null) ? Number(a.entry).toFixed(8) : '-';
-        const tp = (a.tp!==undefined && a.tp!==null) ? Number(a.tp).toFixed(8) : '-';
-        const sl = (a.stop!==undefined && a.stop!==null) ? Number(a.stop).toFixed(8) : '-';
+        const entry = (a.entry !== undefined && a.entry !== null) ? Number(a.entry).toFixed(8) : '-';
+        const tp = (a.tp !== undefined && a.tp !== null) ? Number(a.tp).toFixed(8) : '-';
+        const sl = (a.stop !== undefined && a.stop !== null) ? Number(a.stop).toFixed(8) : '-';
+        const linkHtml = a.link ? `<a class="link" href="${a.link}" target="_blank">Chart</a>` : '-';
         tr.innerHTML = `<td>${time}</td>
-          <td>${escapeHtml(a.strategy||'')}</td>
-          <td>${escapeHtml(a.coin||'')}</td>
-          <td>${escapeHtml(a.symbol||'')}</td>
-          <td>${entry}</td>
-          <td>${tp}</td>
-          <td>${sl}</td>
-          <td>${a.confidence || '-'}</td>
-          <td>${(a.change24h!==undefined?Number(a.change24h).toFixed(2):'-')}</td>
-          <td>${(a.volumeUSD?Number(a.volumeUSD).toFixed(0):'-')}</td>
-          <td>${escapeHtml(a.direction||'-')}</td>
-          <td>${escapeHtml(a.status||'-')}</td>`;
+                        <td>${escapeHtml(a.strategy||'')}</td>
+                        <td>${escapeHtml(a.coin||'')}</td>
+                        <td>${escapeHtml(a.symbol||'')}</td>
+                        <td>${entry}</td>
+                        <td>${tp}</td>
+                        <td>${sl}</td>
+                        <td>${a.confidence || '-'}</td>
+                        <td>${(a.change24h !== undefined ? Number(a.change24h).toFixed(2) : '-')}</td>
+                        <td>${(a.volumeUSD ? Number(a.volumeUSD).toFixed(0) : '-')}</td>
+                        <td>${escapeHtml(a.direction||'-')}</td>
+                        <td>${escapeHtml(a.status||'-')}</td>
+                        <td>${linkHtml}</td>`;
         body.appendChild(tr);
       });
-    }).api_getAlerts();
+      drawChart(alerts);
+    });
   }
 
+  // draw chart using google charts (summary: direction and strategy counts)
+  function drawChart(alerts){
+    try {
+      const dataTable = new google.visualization.DataTable();
+      dataTable.addColumn('string','Category');
+      dataTable.addColumn('number','Count');
+
+      // build counts by strategy (top) and by direction (sub-chart)
+      const stratCounts = {};
+      const dirCounts = {};
+      alerts.forEach(a=>{
+        stratCounts[a.strategy] = (stratCounts[a.strategy]||0) + 1;
+        dirCounts[a.direction] = (dirCounts[a.direction]||0) + 1;
+      });
+
+      // prefer strategy breakdown; if empty show placeholder
+      if (Object.keys(stratCounts).length === 0){
+        dataTable.addRow(['No alerts', 1]);
+      } else {
+        for (const s in stratCounts) dataTable.addRow([s, stratCounts[s]]);
+      }
+
+      const options = {
+        title: 'Alerts by Strategy',
+        pieHole: 0.35,
+        legend: { position: 'right' },
+        height: 220
+      };
+      const chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+      chart.draw(dataTable, options);
+    } catch (e) {
+      console.error('drawChart error', e);
+    }
+  }
+
+  // engine controls
   function startEngine(){
     const strat = document.getElementById('strategy').value;
     google.script.run.withSuccessHandler(refreshAll).api_startEngine(strat);
   }
-  function stopEngine(){ google.script.run.withSuccessHandler(refreshAll).api_stopEngine(); }
-  function manualTick(){ google.script.run.withSuccessHandler(function(res){ alert('Manual run done. Sent: '+(res.sent||0)); refreshAll(); }).api_manualTick(); }
-  function changeStrategy(){ const s = document.getElementById('strategy').value; google.script.run.withSuccessHandler(loadDiagnostics).api_changeStrategy(s); }
-  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/' + encodeURIComponent('1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI'), '_blank'); }
-  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard', '_blank'); }
-  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function stopEngine(){
+    google.script.run.withSuccessHandler(refreshAll).api_stopEngine();
+  }
+  function manualTick(){
+    google.script.run.withSuccessHandler(function(res){
+      alert('Manual run done. Sent: ' + (res.sent||0));
+      refreshAll();
+    }).api_manualTick();
+  }
+  function changeStrategy(){
+    const s = document.getElementById('strategy').value;
+    google.script.run.withSuccessHandler(loadDiagnostics).api_changeStrategy(s);
+  }
 
-  // boot
-  refreshAll();
-  setInterval(refreshAll, 20000);
+  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI', '_blank'); }
+  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard', '_blank'); }
+
+  function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 </script>
 </body>
 </html>
