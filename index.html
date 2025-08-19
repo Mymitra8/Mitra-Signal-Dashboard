@@ -6,13 +6,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{
-      --bg:#f4f7ff; --card:#ffffff; --accent:#0f4bd1; --muted:#6b7280;
+      --bg:#f4f7ff; --card:#fff; --accent:#1e4ed8; --muted:#6b7280;
     }
     *{box-sizing:border-box}
     body{ margin:0; font-family:Inter,Roboto,Arial,sans-serif; background:var(--bg); color:#0b1220; }
-    header{ background:linear-gradient(90deg,var(--accent),#3b82f6); color:#fff; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 6px 18px rgba(11,17,32,0.06); }
+    header{ background:linear-gradient(90deg,var(--accent),#3b82f6); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
     header .title{ font-weight:700; font-size:18px }
-    main{ max-width:1200px; margin:18px auto; padding:0 16px; display:grid; grid-template-columns:360px 1fr; gap:16px; }
+    .wrap{ max-width:1200px; margin:18px auto; padding:0 16px; display:grid; grid-template-columns:360px 1fr; gap:16px; }
     .card{ background:var(--card); border-radius:12px; padding:14px; box-shadow:0 8px 30px rgba(11,17,32,0.04); }
     h3{ margin:0 0 10px 0; color:var(--accent); font-size:15px; }
     .controls{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
@@ -25,8 +25,7 @@
     th,td{ padding:8px; border-bottom:1px solid #f1f5f9; text-align:left; vertical-align:middle; }
     th{ background:#fbfdff; position:sticky; top:0; z-index:1; color:#41516a; font-weight:700; font-size:12px; }
     .muted{ color:var(--muted); font-size:13px; }
-    footer{ padding:8px 0; text-align:center; color:var(--muted); font-size:13px; }
-    @media (max-width:920px){ main{ grid-template-columns:1fr; } }
+    @media (max-width:920px){ .wrap{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -35,18 +34,17 @@
     <div style="font-size:13px">Sheet: <strong>Trade Alerts</strong></div>
   </header>
 
-  <main>
-    <!-- Controls Column -->
+  <div class="wrap">
     <div class="card">
       <h3>Engine Control</h3>
       <div class="controls">
-        <button onclick="startEngine()">▶ Start</button>
-        <button class="alt" onclick="stopEngine()">⏸ Stop</button>
+        <button id="btnStart" onclick="startEngine()">▶ Start</button>
+        <button id="btnStop" class="alt" onclick="stopEngine()">⏸ Stop</button>
         <button onclick="manualTick()">⚡ Manual</button>
       </div>
 
       <div style="margin:8px 0">
-        <label style="font-weight:600; color:#344e9b;">Strategy</label><br/>
+        <label style="font-weight:700; color:#344e9b">Strategy</label><br/>
         <select id="strategy" onchange="changeStrategy()">
           <option>MomentumBurst</option>
           <option>TrendRider</option>
@@ -71,10 +69,9 @@
         <button onclick="refreshAll()">Refresh</button>
       </div>
 
-      <footer>Engine tick: <span id="tickMin">5</span> min • Built for Apps Script</footer>
+      <footer style="margin-top:12px; color:var(--muted); font-size:13px">Engine tick: <span id="tickMin">5</span> min • Apps Script</footer>
     </div>
 
-    <!-- Alerts Column -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -99,38 +96,21 @@
         </table>
       </div>
     </div>
-  </main>
+  </div>
 
-  <script>
-    // The dashboard is served by Apps Script doGet (same origin) — no CORS issues.
-    const BASE_URL = ''; // empty because same origin; we'll build URLs relative to current location
+<script>
+  // All server interactions use google.script.run -> no CORS
+  function safeCall(fun, successFn) {
+    google.script.run.withSuccessHandler(function(res){
+      if(typeof successFn === 'function') successFn(res);
+    })[fun]();
+  }
 
-    function apiUrl(type, params='') {
-      const base = window.location.href.split('?')[0]; // web app base
-      return `${base}?type=${type}${params ? '&' + params : ''}&_t=${Date.now()}`;
-    }
-
-    async function api(type, params='') {
-      try {
-        const url = apiUrl(type, params);
-        const r = await fetch(url, { method:'GET', cache:'no-store' });
-        const text = await r.text();
-        try {
-          return JSON.parse(text);
-        } catch(e) {
-          console.error('API parse error', e, 'raw:', text);
-          return { success:false, raw:text };
-        }
-      } catch(e) {
-        console.error('API fetch error', e);
-        return { success:false, error:String(e) };
-      }
-    }
-
-    async function loadDiagnostics(){
-      const js = await api('diagnostics');
+  // load diagnostics
+  function loadDiagnostics(){
+    google.script.run.withSuccessHandler(function(js){
       if (!js || !js.success) {
-        document.getElementById('diag').innerText = 'Unable to fetch diagnostics.\n' + (js && js.raw ? js.raw : (js && js.error ? js.error : 'No response'));
+        document.getElementById('diag').innerText = 'Unable to fetch diagnostics';
         document.getElementById('runningStatus').innerText = 'Unknown';
         return;
       }
@@ -140,15 +120,15 @@
       document.getElementById('strategy').value = d.activeStrategy || 'MomentumBurst';
       document.getElementById('alertsCount').innerText = 'Alerts: ' + (d.dailyAlerts || 0);
       document.getElementById('tickMin').innerText = d.engineTickMinutes || 5;
-    }
+    }).api_getDiagnostics();
+  }
 
-    async function fetchAlerts(){
-      const js = await api('alerts');
+  function fetchAlerts(){
+    google.script.run.withSuccessHandler(function(js){
       const body = document.getElementById('alertsBody');
       body.innerHTML = '';
       if (!js || !js.success || !js.alerts || !js.alerts.length) {
-        const raw = js && js.raw ? '\n\nRaw:\n' + js.raw : '';
-        body.innerHTML = `<tr><td colspan="12" class="muted">No alerts found.${raw}</td></tr>`;
+        body.innerHTML = '<tr><td colspan="12" class="muted">No alerts found.</td></tr>';
         return;
       }
       js.alerts.forEach(a=>{
@@ -164,49 +144,42 @@
                         <td>${entry}</td>
                         <td>${tp}</td>
                         <td>${sl}</td>
-                        <td>${a.confidence || a['Confidence%'] || '-'}</td>
+                        <td>${a.confidence || '-'}</td>
                         <td>${(a.change24h !== undefined ? Number(a.change24h).toFixed(2) : '-')}</td>
                         <td>${(a.volumeUSD ? Number(a.volumeUSD).toFixed(0) : '-')}</td>
                         <td>${escapeHtml(a.direction||'-')}</td>
                         <td>${escapeHtml(a.status||'-')}</td>`;
         body.appendChild(tr);
       });
-    }
+    }).api_getAlerts();
+  }
 
-    function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function startEngine(){
+    const strat = document.getElementById('strategy').value;
+    google.script.run.withSuccessHandler(function(){ refreshAll(); }).api_startEngine(strat);
+  }
+  function stopEngine(){
+    google.script.run.withSuccessHandler(function(){ refreshAll(); }).api_stopEngine();
+  }
+  function manualTick(){
+    google.script.run.withSuccessHandler(function(res){
+      alert('Manual run complete. Sent: ' + (res.sent || 0));
+      refreshAll();
+    }).api_manualTick();
+  }
+  function changeStrategy(){
+    const s = document.getElementById('strategy').value;
+    google.script.run.withSuccessHandler(function(){ loadDiagnostics(); }).api_changeStrategy(s);
+  }
+  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI', '_blank'); }
+  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard', '_blank'); }
+  function refreshAll(){ loadDiagnostics(); fetchAlerts(); }
 
-    async function startEngine(){
-      const strat = document.getElementById('strategy').value;
-      await api('start', 'strategy=' + encodeURIComponent(strat));
-      await refreshAll();
-    }
-    async function stopEngine(){
-      await api('stop');
-      await refreshAll();
-    }
-    async function manualTick(){
-      const js = await api('manual');
-      if (js && js.success) alert('Manual run done. Sent: ' + (js.sent||0));
-      else alert('Manual run failed. Check diagnostics.');
-      await refreshAll();
-    }
-    async function changeStrategy(){
-      const s = document.getElementById('strategy').value;
-      await api('changeStrategy', 'strategy=' + encodeURIComponent(s));
-      await loadDiagnostics();
-    }
+  function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-    function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI', '_blank'); }
-    function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard', '_blank'); }
-
-    async function refreshAll(){
-      await loadDiagnostics();
-      await fetchAlerts();
-    }
-
-    // boot
-    refreshAll();
-    setInterval(refreshAll, 20000);
-  </script>
+  // Boot
+  refreshAll();
+  setInterval(refreshAll, 20000);
+</script>
 </body>
 </html>
