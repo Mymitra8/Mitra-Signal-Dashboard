@@ -1,167 +1,225 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Mitra Signals Dashboard</title>
+  <meta charset="utf-8" />
+  <title>Mitra Signals — Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fa;
-      margin: 0;
-      padding: 0;
+    :root{
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --accent: #1e40af;
+      --muted: #6b7280;
+      --success: #10b981;
+      --danger: #ef4444;
+      --glass: rgba(255,255,255,0.85);
     }
-    header {
-      background: #283593;
-      color: #fff;
-      padding: 1rem 2rem;
-      font-size: 1.4rem;
-      font-weight: bold;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      padding: 20px;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    .card h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      color: #283593;
-    }
-    button {
-      background: #283593;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 14px;
-      margin: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #3f51b5;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      font-size: 0.9rem;
-      text-align: center;
-    }
-    th {
-      background: #eee;
-    }
-    .status {
-      font-size: 0.9rem;
-      margin-top: 10px;
-    }
-    select {
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+    html,body{ height:100%; margin:0; font-family: Inter, Roboto, Arial, sans-serif; background:var(--bg); color:#0f172a; }
+    header{ background: linear-gradient(90deg,var(--accent), #3b82f6); color:#fff; padding:18px 22px; font-weight:700; display:flex; align-items:center; justify-content:space-between; box-shadow:0 4px 18px rgba(15,23,42,0.08); }
+    header .title{font-size:18px}
+    .wrap{ padding:18px; display:grid; grid-template-columns: 360px 1fr; gap:18px; max-width:1200px; margin:18px auto; }
+    .card{ background:var(--card); border-radius:12px; padding:14px; box-shadow: 0 2px 10px rgba(15,23,42,0.04); }
+    .control .row{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+    .control button{ background:var(--accent); color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; }
+    .control button.alt{ background:#475569; }
+    .control select{ padding:8px; border-radius:8px; border:1px solid #e6eef8; min-width:160px; }
+    .status{ font-size:13px; color:var(--muted); margin-top:8px; }
+    .diag pre{ background:#0f172a10; padding:10px; border-radius:8px; max-height:200px; overflow:auto; }
+    h3{ margin:0 0 8px 0; color:var(--accent); font-size:15px; }
+    .alerts-table{ width:100%; border-collapse:collapse; font-size:13px; }
+    .alerts-table th, .alerts-table td{ padding:8px 6px; border-bottom:1px solid #f1f5f9; text-align:left; }
+    .alerts-table th{ background:#f8fafc; color:#475569; font-weight:600; font-size:12px; position:sticky; top:0; }
+    .small{ font-size:12px; color:var(--muted); }
+    .mini { font-size:11px; color:#475569; padding:6px 8px; background:#f1f5f9; border-radius:8px; display:inline-block; }
+    .controls-row{ display:flex; gap:10px; align-items:center; margin-top:10px; }
+    .right { display:flex; gap:8px; align-items:center; }
+    footer{ text-align:center; padding:8px; color:var(--muted); font-size:12px; margin-top:12px; }
+    .pill{ padding:6px 8px; border-radius:999px; background:#eef2ff; color:var(--accent); font-weight:600; font-size:12px; }
+    /* responsive */
+    @media (max-width:920px){
+      .wrap{ grid-template-columns:1fr; padding:12px; }
     }
   </style>
 </head>
 <body>
-  <header>Mitra Signals — Dashboard</header>
-  <div class="container">
-    
-    <!-- Engine Control -->
-    <div class="card">
-      <h2>Engine Control</h2>
-      <button onclick="api('start')">▶ Start</button>
-      <button onclick="api('stop')">⏸ Stop</button>
-      <button onclick="api('manual')">⚡ Manual Tick</button>
-      <div class="status" id="engineStatus">Loading status...</div>
-      <label>Strategy:
-        <select id="strategySelect" onchange="changeStrategy()">
+  <header>
+    <div class="title">Mitra Signals — Dashboard</div>
+    <div style="font-size:13px; opacity:.95">Connected to Sheet: <span id="sheetName" class="pill">Loading...</span></div>
+  </header>
+
+  <div class="wrap">
+    <!-- Left column: Controls -->
+    <div class="card control">
+      <h3>Engine Control</h3>
+      <div class="row">
+        <button id="btnStart" onclick="startEngine()">▶ Start</button>
+        <button id="btnStop" onclick="stopEngine()" class="alt">⏸ Stop</button>
+        <button id="btnManual" onclick="manualTick()">⚡ Manual Tick</button>
+      </div>
+      <div class="row">
+        <label for="strategy">Strategy</label>
+        <select id="strategy" onchange="changeStrategy()">
           <option>MomentumBurst</option>
           <option>TrendRider</option>
           <option>VolumeSurge</option>
           <option>MeanRevertSnap</option>
         </select>
-      </label>
-    </div>
-    
-    <!-- Diagnostics -->
-    <div class="card">
-      <h2>Diagnostics</h2>
-      <pre id="diagBox">Loading...</pre>
-    </div>
-    
-    <!-- Alerts -->
-    <div class="card" style="grid-column: span 2;">
-      <h2>Latest Alerts</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Time</th><th>Coin</th><th>Sym</th>
-            <th>Price</th><th>Conf%</th><th>Entry</th><th>TP</th><th>SL</th>
-            <th>Strat</th><th>Timeline</th>
-          </tr>
-        </thead>
-        <tbody id="alertsTable"></tbody>
-      </table>
-    </div>
-    
-  </div>
-  
-  <script>
-    const base = ScriptApp.getService().getUrl ? ScriptApp.getService().getUrl() : ''; 
-    // If deployed, replace with your Web App URL:
-    // const base = 'https://script.google.com/macros/s/AKfycbxxxx/exec';
+      </div>
 
-    async function api(type) {
-      const res = await fetch(base + '?type=' + type);
-      const js = await res.json();
-      console.log(type, js);
-      loadDiagnostics();
-      if(type==='alerts'||type==='manual') loadAlerts();
-      if(type==='start'||type==='stop') loadDiagnostics();
+      <div class="controls-row">
+        <div class="mini" id="runningStatus">Loading...</div>
+        <div class="mini" id="alertsCount">Alerts today: 0</div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <h3>Diagnostics</h3>
+        <div class="diag"><pre id="diagBox">Loading diagnostics...</pre></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <h3>Quick Tools</h3>
+        <div style="display:flex;gap:8px;">
+          <button onclick="openSheet()">Open Sheet</button>
+          <button onclick="openRepo()">Open Repo</button>
+          <button onclick="fetchAlerts()">Refresh Alerts</button>
+        </div>
+      </div>
+
+      <footer>Engine tick every <span id="tickMinutes">5</span> minutes • Designed for Apps Script</footer>
+    </div>
+
+    <!-- Right column: Alerts table -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+          <h3>Latest Alerts</h3>
+          <div class="small">Newest alerts are shown near the top. Click refresh to update.</div>
+        </div>
+        <div class="right">
+          <button onclick="fetchAlerts()">Refresh</button>
+          <button onclick="openSheet()">Open Sheet</button>
+        </div>
+      </div>
+
+      <div style="overflow:auto; max-height:640px;">
+        <table class="alerts-table" id="alertsTable">
+          <thead>
+            <tr>
+              <th>Time</th><th>Strategy</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="alertsBody">
+            <tr><td colspan="12" class="small">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================= CONFIG - set to your deployed web app ========================
+    const BASE_URL = 'https://script.google.com/macros/s/AKfycbyb-uWucZ1i4DGn8uDQKaBtGTyWzSmJ6xshABZ5nK92Alzo7e1nbl4QuZOBIjVUMBNL/exec';
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI';
+    const REPO_URL = 'https://github.com/Mymitra8/Mitra-Signal-Dashboard';
+
+    // ========================= HTTP helpers ========================
+    async function api(type, params=''){
+      try{
+        const url = `${BASE_URL}?type=${type}${params ? '&' + params : ''}`;
+        const r = await fetch(url, { method:'GET', cache:'no-store' });
+        if (!r.ok) {
+          console.error('API returned', r.status, await r.text());
+          return null;
+        }
+        const js = await r.json();
+        return js;
+      }catch(e){
+        console.error('api error', e);
+        return null;
+      }
     }
-    
-    async function loadDiagnostics() {
-      const res = await fetch(base + '?type=diagnostics');
-      const js = await res.json();
-      document.getElementById('diagBox').innerText = JSON.stringify(js.data,null,2);
-      document.getElementById('engineStatus').innerText = 
-        'Running: ' + js.data.isRunning + ' | Strategy: ' + js.data.activeStrategy;
-      document.getElementById('strategySelect').value = js.data.activeStrategy;
+
+    // ========================= UI bindings ========================
+    async function loadDiagnostics(){
+      const js = await api('diagnostics');
+      if (!js || !js.success) {
+        document.getElementById('diagBox').innerText = 'Unable to fetch diagnostics';
+        return;
+      }
+      const d = js.data;
+      document.getElementById('diagBox').innerText = JSON.stringify(d, null, 2);
+      document.getElementById('runningStatus').innerText = d.isRunning ? 'Running' : 'Stopped';
+      document.getElementById('strategy').value = d.activeStrategy;
+      document.getElementById('alertsCount').innerText = 'Alerts today: ' + (d.dailyAlerts || 0);
+      document.getElementById('tickMinutes').innerText = d.engineTickMinutes || 5;
     }
-    
-    async function loadAlerts() {
-      const res = await fetch(base + '?type=alerts');
-      const js = await res.json();
-      const tbody = document.getElementById('alertsTable');
+
+    async function fetchAlerts(){
+      const js = await api('alerts');
+      const tbody = document.getElementById('alertsBody');
       tbody.innerHTML = '';
+      if (!js || !js.success || !js.alerts || !js.alerts.length) {
+        tbody.innerHTML = '<tr><td colspan="12" class="small">No alerts found</td></tr>';
+        return;
+      }
       js.alerts.forEach(a=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${a.time}</td><td>${a.coin}</td><td>${a.sym}</td>
-                        <td>${a.price}</td><td>${a.conf}</td>
-                        <td>${a.entry}</td><td>${a.tp}</td><td>${a.sl}</td>
-                        <td>${a.strategy}</td><td>${a.timeline}</td>`;
+        const time = (a.timestamp) ? new Date(a.timestamp).toLocaleString() : '-';
+        const entry = (a.entry !== undefined && a.entry !== null) ? Number(a.entry).toFixed(8) : '-';
+        const tp = (a.tp !== undefined && a.tp !== null) ? Number(a.tp).toFixed(8) : '-';
+        const sl = (a.stop !== undefined && a.stop !== null) ? Number(a.stop).toFixed(8) : '-';
+        tr.innerHTML = `<td>${time}</td>
+                        <td>${escapeHtml(a.strategy||'')}</td>
+                        <td>${escapeHtml(a.coin||'')}</td>
+                        <td>${escapeHtml(a.symbol||'')}</td>
+                        <td>${entry}</td>
+                        <td>${tp}</td>
+                        <td>${sl}</td>
+                        <td>${a.confidence || a['Confidence%'] || '-'}</td>
+                        <td>${(a.change24h !== undefined ? Number(a.change24h).toFixed(2) : '-')}</td>
+                        <td>${(a.volumeUSD ? Number(a.volumeUSD).toFixed(0) : '-')}</td>
+                        <td>${escapeHtml(a.direction||'-')}</td>
+                        <td>${escapeHtml(a.status||'-')}</td>`;
         tbody.appendChild(tr);
       });
     }
-    
-    function changeStrategy(){
-      const strat = document.getElementById('strategySelect').value;
-      api('changeStrategy&strategy='+encodeURIComponent(strat));
+
+    function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+    async function startEngine(){
+      await api('start', 'strategy=' + encodeURIComponent(document.getElementById('strategy').value));
+      await loadDiagnostics(); fetchAlerts();
     }
-    
-    // Auto-refresh
-    loadDiagnostics(); loadAlerts();
+
+    async function stopEngine(){
+      await api('stop');
+      await loadDiagnostics(); fetchAlerts();
+    }
+
+    async function manualTick(){
+      const js = await api('manual');
+      if (js && js.success) {
+        alert('Manual scan completed. Sent: ' + (js.sent || 0));
+      } else {
+        alert('Manual scan failed. Check logs.');
+      }
+      await loadDiagnostics(); fetchAlerts();
+    }
+
+    async function changeStrategy(){
+      const s = document.getElementById('strategy').value;
+      await api('changeStrategy', 'strategy=' + encodeURIComponent(s));
+      await loadDiagnostics();
+    }
+
+    function openSheet(){ window.open(SHEET_URL, '_blank'); }
+    function openRepo(){ window.open(REPO_URL, '_blank'); }
+
+    // Auto-refresh cycles
+    loadDiagnostics();
+    fetchAlerts();
     setInterval(loadDiagnostics, 15000);
-    setInterval(loadAlerts, 20000);
+    setInterval(fetchAlerts, 20000);
   </script>
 </body>
 </html>
