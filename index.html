@@ -5,46 +5,40 @@
   <title>Mitra Signals — Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root{
-      --bg:#f4f7ff; --card:#fff; --accent:#1e4ed8; --muted:#6b7280;
-    }
+    :root{ --bg:#f4f7ff; --card:#fff; --accent:#1e4ed8; --muted:#6b7280; }
     *{box-sizing:border-box}
     body{ margin:0; font-family:Inter,Roboto,Arial,sans-serif; background:var(--bg); color:#0b1220; }
     header{ background:linear-gradient(90deg,var(--accent),#3b82f6); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
-    header .title{ font-weight:700; font-size:18px }
     .wrap{ max-width:1200px; margin:18px auto; padding:0 16px; display:grid; grid-template-columns:360px 1fr; gap:16px; }
     .card{ background:var(--card); border-radius:12px; padding:14px; box-shadow:0 8px 30px rgba(11,17,32,0.04); }
-    h3{ margin:0 0 10px 0; color:var(--accent); font-size:15px; }
-    .controls{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
-    button{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; }
+    button{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; }
     button.alt{ background:#475569; }
-    select{ padding:8px; border-radius:8px; border:1px solid #e6eef8; min-width:160px; }
     .mini{ display:inline-block; padding:6px 8px; background:#eef2ff; color:var(--accent); border-radius:999px; font-weight:700; }
     pre{ background:#f1f6ff; padding:10px; border-radius:8px; max-height:220px; overflow:auto; font-size:13px; }
     table{ width:100%; border-collapse:collapse; font-size:13px; }
-    th,td{ padding:8px; border-bottom:1px solid #f1f5f9; text-align:left; vertical-align:middle; }
-    th{ background:#fbfdff; position:sticky; top:0; z-index:1; color:#41516a; font-weight:700; font-size:12px; }
+    th,td{ padding:8px; border-bottom:1px solid #f1f5f9; text-align:left; }
+    th{ background:#fbfdff; position:sticky; top:0; color:#41516a; font-weight:700; }
     .muted{ color:var(--muted); font-size:13px; }
     @media (max-width:920px){ .wrap{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <header>
-    <div class="title">Mitra Signals — Dashboard</div>
+    <div style="font-weight:700">Mitra Signals — Dashboard</div>
     <div style="font-size:13px">Sheet: <strong>Trade Alerts</strong></div>
   </header>
 
   <div class="wrap">
     <div class="card">
       <h3>Engine Control</h3>
-      <div class="controls">
-        <button id="btnStart" onclick="startEngine()">▶ Start</button>
-        <button id="btnStop" class="alt" onclick="stopEngine()">⏸ Stop</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="startEngine()">▶ Start</button>
+        <button class="alt" onclick="stopEngine()">⏸ Stop</button>
         <button onclick="manualTick()">⚡ Manual</button>
       </div>
 
-      <div style="margin:8px 0">
-        <label style="font-weight:700; color:#344e9b">Strategy</label><br/>
+      <div style="margin-top:8px">
+        <label style="font-weight:700;color:#344e9b">Strategy</label><br/>
         <select id="strategy" onchange="changeStrategy()">
           <option>MomentumBurst</option>
           <option>TrendRider</option>
@@ -54,7 +48,7 @@
       </div>
 
       <div style="margin-top:12px">
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex;gap:8px;align-items:center;">
           <div class="mini" id="runningStatus">Loading...</div>
           <div class="mini" id="alertsCount">Alerts: 0</div>
         </div>
@@ -63,50 +57,32 @@
       <h3 style="margin-top:14px">Diagnostics</h3>
       <pre id="diag">Loading diagnostics...</pre>
 
-      <div style="margin-top:12px; display:flex; gap:8px;">
+      <div style="margin-top:12px;display:flex;gap:8px;">
         <button onclick="openSheet()">Open Sheet</button>
         <button onclick="openRepo()">Open Repo</button>
         <button onclick="refreshAll()">Refresh</button>
       </div>
-
-      <footer style="margin-top:12px; color:var(--muted); font-size:13px">Engine tick: <span id="tickMin">5</span> min • Apps Script</footer>
+      <footer style="margin-top:12px;color:var(--muted);font-size:13px">Engine tick: <span id="tickMin">5</span> min • Apps Script</footer>
     </div>
 
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <h3>Latest Alerts</h3>
-          <div class="muted">Newest alerts appear near the top. Refresh to update.</div>
-        </div>
-        <div>
-          <button onclick="fetchAlerts()">Refresh</button>
-        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><h3>Latest Alerts</h3><div class="muted">Newest alerts near top.</div></div>
+        <div><button onclick="fetchAlerts()">Refresh</button></div>
       </div>
 
-      <div style="margin-top:12px; overflow:auto; max-height:680px;">
+      <div style="margin-top:12px;overflow:auto;max-height:680px;">
         <table>
-          <thead>
-            <tr>
-              <th>Time</th><th>Strategy</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="alertsBody">
-            <tr><td colspan="12" class="muted">Loading...</td></tr>
-          </tbody>
+          <thead><tr><th>Time</th><th>Strat</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th></tr></thead>
+          <tbody id="alertsBody"><tr><td colspan="12" class="muted">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 
 <script>
-  // All server interactions use google.script.run -> no CORS
-  function safeCall(fun, successFn) {
-    google.script.run.withSuccessHandler(function(res){
-      if(typeof successFn === 'function') successFn(res);
-    })[fun]();
-  }
-
-  // load diagnostics
+  // All calls use google.script.run (no CORS)
+  function refreshAll(){ loadDiagnostics(); fetchAlerts(); }
   function loadDiagnostics(){
     google.script.run.withSuccessHandler(function(js){
       if (!js || !js.success) {
@@ -156,28 +132,16 @@
 
   function startEngine(){
     const strat = document.getElementById('strategy').value;
-    google.script.run.withSuccessHandler(function(){ refreshAll(); }).api_startEngine(strat);
+    google.script.run.withSuccessHandler(refreshAll).api_startEngine(strat);
   }
-  function stopEngine(){
-    google.script.run.withSuccessHandler(function(){ refreshAll(); }).api_stopEngine();
-  }
-  function manualTick(){
-    google.script.run.withSuccessHandler(function(res){
-      alert('Manual run complete. Sent: ' + (res.sent || 0));
-      refreshAll();
-    }).api_manualTick();
-  }
-  function changeStrategy(){
-    const s = document.getElementById('strategy').value;
-    google.script.run.withSuccessHandler(function(){ loadDiagnostics(); }).api_changeStrategy(s);
-  }
-  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI', '_blank'); }
-  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard', '_blank'); }
-  function refreshAll(){ loadDiagnostics(); fetchAlerts(); }
-
+  function stopEngine(){ google.script.run.withSuccessHandler(refreshAll).api_stopEngine(); }
+  function manualTick(){ google.script.run.withSuccessHandler(function(res){ alert('Manual run complete. Sent: ' + (res.sent||0)); refreshAll(); }).api_manualTick(); }
+  function changeStrategy(){ const s = document.getElementById('strategy').value; google.script.run.withSuccessHandler(loadDiagnostics).api_changeStrategy(s); }
+  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI','_blank'); }
+  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard','_blank'); }
   function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-  // Boot
+  // boot
   refreshAll();
   setInterval(refreshAll, 20000);
 </script>
