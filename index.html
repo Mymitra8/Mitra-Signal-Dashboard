@@ -5,61 +5,57 @@
   <title>Mitra Signals — Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <style>
-    :root{--bg:#f4f7ff;--card:#fff;--accent:#1e4ed8;--muted:#6b7280}
+    :root{--bg:#F6F9FF;--card:#ffffff;--accent:#0b5cff;--muted:#6b7280}
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Roboto,Arial,sans-serif;background:var(--bg);color:#0b1220}
-    header{background:linear-gradient(90deg,var(--accent),#3b82f6);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-    .wrap{max-width:1200px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:360px 1fr;gap:16px}
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 30px rgba(11,17,32,0.04)}
-    button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:600}
+    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:#0b1220}
+    header{background:linear-gradient(90deg,var(--accent),#3b82f6);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .wrap{max-width:1100px;margin:14px auto;padding:12px;display:grid;grid-template-columns:320px 1fr;gap:14px}
+    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(11,17,32,0.06)}
+    h3{margin:0 0 10px 0;color:#0b3ea6}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:700}
     button.alt{background:#475569}
-    select{padding:8px;border-radius:8px;border:1px solid #e6eef8;min-width:160px}
+    select,input[type="text"]{padding:8px;border-radius:8px;border:1px solid #e6eef8}
     .mini{display:inline-block;padding:6px 8px;background:#eef2ff;color:var(--accent);border-radius:999px;font-weight:700}
-    pre{background:#f1f6ff;padding:10px;border-radius:8px;max-height:220px;overflow:auto;font-size:13px}
     table{width:100%;border-collapse:collapse;font-size:13px}
     th,td{padding:8px;border-bottom:1px solid #f1f5f9;text-align:left;vertical-align:middle}
-    th{background:#fbfdff;position:sticky;top:0;z-index:1;color:#41516a;font-weight:700;font-size:12px}
+    th{background:#fbfdff;position:sticky;top:0;color:#41516a;font-weight:700}
     .muted{color:var(--muted);font-size:13px}
-    .small{font-size:12px;color:#6b7280}
-    @media(max-width:920px){.wrap{grid-template-columns:1fr}}
-    a.link { color:#1e4ed8; text-decoration:none; font-weight:600; }
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    .chart-wrap{height:240px}
+    @media(max-width:980px){ .wrap{grid-template-columns:1fr} .chart-wrap{height:200px} table{font-size:12px} }
+    a.link{color:var(--accent);font-weight:700;text-decoration:none}
   </style>
-  <!-- Load Google Charts loader.js (to fix google is not defined) -->
+
+  <!-- Google Charts loader -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script>
-    // Load packages we may use
-    google.charts.load('current', {'packages':['corechart','table']});
-    // After charts lib loaded, initialize the dashboard
-    google.charts.setOnLoadCallback(function(){
-      // initialize after google charts ready
-      initDashboard();
-    });
-
+    google.charts.load('current', {'packages':['corechart','table','bar']});
+    google.charts.setOnLoadCallback(initDashboard);
     function initDashboard(){
-      // basic boot: fetch diagnostics, alerts, and draw chart
       refreshAll();
-      // periodic refresh
       setInterval(refreshAll, 20000);
     }
   </script>
 </head>
 <body>
   <header>
-    <div class="title">Mitra Signals — Dashboard</div>
-    <div style="font-size:13px">Sheet: <strong>Trade Alerts</strong></div>
+    <div style="font-weight:800">Mitra Signals — Dashboard</div>
+    <div style="font-size:13px">Trade Alerts • Sheet: <strong>Trade Alerts</strong></div>
   </header>
 
   <div class="wrap">
+    <!-- Left: controls & diagnostics -->
     <div class="card">
       <h3>Engine Control</h3>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button id="btnStart" onclick="startEngine()">▶ Start</button>
-        <button id="btnStop" class="alt" onclick="stopEngine()">⏸ Stop</button>
+      <div class="controls">
+        <button onclick="startEngine()">▶ Start</button>
+        <button class="alt" onclick="stopEngine()">⏸ Stop</button>
         <button onclick="manualTick()">⚡ Manual</button>
       </div>
 
-      <div style="margin:8px 0">
-        <label style="font-weight:700;color:#344e9b">Strategy</label><br/>
+      <div style="margin-top:10px">
+        <label style="font-weight:700">Strategy</label><br/>
         <select id="strategy" onchange="changeStrategy()">
           <option>MomentumBurst</option>
           <option>TrendRider</option>
@@ -68,162 +64,171 @@
         </select>
       </div>
 
-      <div style="margin-top:12px"><div style="display:flex;gap:8px;align-items:center"><div class="mini" id="runningStatus">Loading...</div><div class="mini" id="alertsCount">Alerts: 0</div></div></div>
-
-      <h3 style="margin-top:14px">Diagnostics</h3>
-      <pre id="diag" class="small">Loading diagnostics...</pre>
-
-      <div style="margin-top:12px;display:flex;gap:8px;">
-        <button onclick="openSheet()">Open Sheet</button>
-        <button onclick="openRepo()">Open Repo</button>
-        <button onclick="refreshAll()">Refresh</button>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <div class="mini" id="runningStatus">Loading...</div>
+        <div class="mini" id="alertsCount">Alerts: 0</div>
       </div>
 
-      <footer style="margin-top:12px;color:var(--muted);font-size:13px">Engine tick: <span id="tickMin">5</span> min • Apps Script</footer>
+      <h3 style="margin-top:14px">Quick Filters</h3>
+      <div class="filters">
+        <select id="fStrategy" onchange="applyFilters()">
+          <option value="">All Strategies</option>
+          <option>MomentumBurst</option><option>TrendRider</option><option>VolumeSurge</option><option>MeanRevertSnap</option>
+        </select>
+        <select id="fDirection" onchange="applyFilters()">
+          <option value="">Any Direction</option><option>BUY</option><option>SELL</option>
+        </select>
+        <input type="text" id="q" placeholder="Search Coin / Symbol" oninput="applyFilters()" />
+        <button onclick="clearFilters()">Clear</button>
+      </div>
+
+      <h3 style="margin-top:12px">Diagnostics</h3>
+      <pre id="diag" class="muted" style="height:110px;overflow:auto;padding:8px;border-radius:8px;background:#f7fbff"></pre>
+
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button onclick="openSheet()">Open Sheet</button>
+        <button onclick="openRepo()">Open Repo</button>
+      </div>
     </div>
 
+    <!-- Right: chart + table -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h3>Latest Alerts</h3>
-          <div class="muted">Newest alerts appear near the top. Click chart link to open TradingView in a new tab.</div>
-        </div>
+        <div><h3>Latest Alerts</h3><div class="muted">Newest alerts near top. Tap Chart to open TradingView.</div></div>
         <div><button onclick="fetchAlerts()">Refresh</button></div>
       </div>
 
-      <div style="margin-top:12px; display:grid; grid-template-rows:auto 1fr; gap:10px;">
-        <div id="chart_div" style="height:220px;"></div>
-        <div style="overflow:auto; max-height:420px;">
-          <table>
-            <thead><tr><th>Time</th><th>Strategy</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th><th>Chart</th></tr></thead>
-            <tbody id="alertsBody"><tr><td colspan="13" class="muted">Loading...</td></tr></tbody>
-          </table>
-        </div>
+      <div class="chart-wrap" id="chart_div" style="margin-top:10px"></div>
+
+      <div style="margin-top:10px;overflow:auto;max-height:420px">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th><th>Strat</th><th>Coin</th><th>Sym</th><th>Entry</th><th>TP</th><th>SL</th><th>Conf%</th><th>24h%</th><th>Vol</th><th>Dir</th><th>Status</th><th>Chart</th>
+            </tr>
+          </thead>
+          <tbody id="alertsBody"><tr><td colspan="13" class="muted">Loading...</td></tr></tbody>
+        </table>
       </div>
     </div>
   </div>
 
 <script>
-  // safe wrapper for google.script.run calls
+  // wrapper for google.script.run calls
   function gsRun(fn, callback){
-    google.script.run.withSuccessHandler(function(res){
-      try { callback(res); } catch(e){ console.error(e); }
-    })[fn]();
+    google.script.run.withSuccessHandler(function(res){ try { callback(res); } catch(e){ console.error(e); } })[fn]();
   }
+
+  // state for client filters
+  let ALL_ALERTS = [];
 
   function refreshAll(){ loadDiagnostics(); fetchAlerts(); }
 
   function loadDiagnostics(){
     gsRun('api_getDiagnostics', function(js){
-      if (!js || !js.success) {
-        document.getElementById('diag').innerText = 'Unable to fetch diagnostics';
-        document.getElementById('runningStatus').innerText = 'Unknown';
-        return;
-      }
+      if (!js || !js.success) { document.getElementById('diag').innerText = 'Unable to fetch diagnostics'; document.getElementById('runningStatus').innerText = 'Unknown'; return; }
       const d = js.data;
-      document.getElementById('diag').innerText = JSON.stringify(d,null,2);
+      document.getElementById('diag').innerText = JSON.stringify(d, null, 2);
       document.getElementById('runningStatus').innerText = d.isRunning ? 'Running' : 'Stopped';
       document.getElementById('strategy').value = d.activeStrategy || 'MomentumBurst';
       document.getElementById('alertsCount').innerText = 'Alerts: ' + (d.dailyAlerts || 0);
-      document.getElementById('tickMin').innerText = d.engineTickMinutes || 5;
     });
   }
 
   function fetchAlerts(){
     gsRun('api_getAlerts', function(js){
-      const body = document.getElementById('alertsBody');
-      body.innerHTML = '';
-      if (!js || !js.success || !js.alerts || !js.alerts.length){
-        body.innerHTML = '<tr><td colspan="13" class="muted">No alerts found.</td></tr>';
-        drawChart([]); // clear chart
-        return;
-      }
-      // populate table rows and prepare chart data
-      const alerts = js.alerts;
-      alerts.forEach(a=>{
-        const tr = document.createElement('tr');
-        const time = a.timestamp ? (new Date(a.timestamp)).toLocaleString() : '-';
-        const entry = (a.entry !== undefined && a.entry !== null) ? Number(a.entry).toFixed(8) : '-';
-        const tp = (a.tp !== undefined && a.tp !== null) ? Number(a.tp).toFixed(8) : '-';
-        const sl = (a.stop !== undefined && a.stop !== null) ? Number(a.stop).toFixed(8) : '-';
-        const linkHtml = a.link ? `<a class="link" href="${a.link}" target="_blank">Chart</a>` : '-';
-        tr.innerHTML = `<td>${time}</td>
-                        <td>${escapeHtml(a.strategy||'')}</td>
-                        <td>${escapeHtml(a.coin||'')}</td>
-                        <td>${escapeHtml(a.symbol||'')}</td>
-                        <td>${entry}</td>
-                        <td>${tp}</td>
-                        <td>${sl}</td>
-                        <td>${a.confidence || '-'}</td>
-                        <td>${(a.change24h !== undefined ? Number(a.change24h).toFixed(2) : '-')}</td>
-                        <td>${(a.volumeUSD ? Number(a.volumeUSD).toFixed(0) : '-')}</td>
-                        <td>${escapeHtml(a.direction||'-')}</td>
-                        <td>${escapeHtml(a.status||'-')}</td>
-                        <td>${linkHtml}</td>`;
-        body.appendChild(tr);
-      });
-      drawChart(alerts);
+      if (!js || !js.success) { document.getElementById('alertsBody').innerHTML = '<tr><td colspan="13" class="muted">Failed to load alerts</td></tr>'; drawChart([]); return; }
+      ALL_ALERTS = js.alerts || [];
+      // sort newest first by Timestamp
+      ALL_ALERTS.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+      applyFilters(); // will render table & chart
     });
   }
 
-  // draw chart using google charts (summary: direction and strategy counts)
+  function applyFilters(){
+    const strat = document.getElementById('fStrategy').value;
+    const dir = document.getElementById('fDirection').value;
+    const q = (document.getElementById('q').value || '').trim().toLowerCase();
+    const filtered = ALL_ALERTS.filter(a=>{
+      if (strat && a.strategy !== strat) return false;
+      if (dir && a.direction !== dir) return false;
+      if (q){
+        if ((a.coin||'').toString().toLowerCase().indexOf(q) >= 0) return true;
+        if ((a.symbol||'').toString().toLowerCase().indexOf(q) >= 0) return true;
+        return false;
+      }
+      return true;
+    });
+    renderTable(filtered);
+    drawChart(filtered);
+  }
+
+  function clearFilters(){ document.getElementById('fStrategy').value=''; document.getElementById('fDirection').value=''; document.getElementById('q').value=''; applyFilters(); }
+
+  function renderTable(alerts){
+    const body = document.getElementById('alertsBody');
+    body.innerHTML = '';
+    if (!alerts || alerts.length === 0){ body.innerHTML = '<tr><td colspan="13" class="muted">No alerts found.</td></tr>'; return; }
+    alerts.forEach(a=>{
+      const tr = document.createElement('tr');
+      const time = a.timestamp ? (new Date(a.timestamp)).toLocaleString() : '-';
+      const entry = a.entry !== undefined && a.entry !== null ? Number(a.entry).toFixed(8) : '-';
+      const tp = a.tp !== undefined && a.tp !== null ? Number(a.tp).toFixed(8) : '-';
+      const sl = a.stop !== undefined && a.stop !== null ? Number(a.stop).toFixed(8) : '-';
+      const vol = a.volumeUSD ? Number(a.volumeUSD).toFixed(0) : '-';
+      const chartLink = a.link ? `<a class="link" href="${a.link}" target="_blank">Chart</a>` : '-';
+      tr.innerHTML = `<td>${time}</td>
+                      <td>${escapeHtml(a.strategy||'')}</td>
+                      <td>${escapeHtml(a.coin||'')}</td>
+                      <td>${escapeHtml(a.symbol||'')}</td>
+                      <td>${entry}</td>
+                      <td>${tp}</td>
+                      <td>${sl}</td>
+                      <td>${a.confidence || '-'}</td>
+                      <td>${a.change24h !== undefined ? Number(a.change24h).toFixed(2) : '-'}</td>
+                      <td>${vol}</td>
+                      <td>${escapeHtml(a.direction||'-')}</td>
+                      <td>${escapeHtml(a.status||'-')}</td>
+                      <td>${chartLink}</td>`;
+      body.appendChild(tr);
+    });
+  }
+
+  // Draw summary chart using Google Charts
   function drawChart(alerts){
     try {
-      const dataTable = new google.visualization.DataTable();
-      dataTable.addColumn('string','Category');
-      dataTable.addColumn('number','Count');
-
-      // build counts by strategy (top) and by direction (sub-chart)
       const stratCounts = {};
-      const dirCounts = {};
+      const confBuckets = [0,20,40,60,80,100].map(()=>0);
       alerts.forEach(a=>{
         stratCounts[a.strategy] = (stratCounts[a.strategy]||0) + 1;
-        dirCounts[a.direction] = (dirCounts[a.direction]||0) + 1;
+        const c = Number(a.confidence||0);
+        const idx = Math.min(5, Math.floor(c/20));
+        confBuckets[idx] = confBuckets[idx] + 1;
       });
-
-      // prefer strategy breakdown; if empty show placeholder
+      const data = new google.visualization.DataTable();
+      data.addColumn('string','Strategy');
+      data.addColumn('number','Count');
       if (Object.keys(stratCounts).length === 0){
-        dataTable.addRow(['No alerts', 1]);
+        data.addRow(['No alerts',1]);
       } else {
-        for (const s in stratCounts) dataTable.addRow([s, stratCounts[s]]);
+        for (const s in stratCounts) data.addRow([s, stratCounts[s]]);
       }
-
-      const options = {
-        title: 'Alerts by Strategy',
-        pieHole: 0.35,
-        legend: { position: 'right' },
-        height: 220
-      };
+      const options = { title: 'Alerts by Strategy', pieHole: 0.4, height: 220, legend: { position: 'right' } };
       const chart = new google.visualization.PieChart(document.getElementById('chart_div'));
-      chart.draw(dataTable, options);
-    } catch (e) {
-      console.error('drawChart error', e);
-    }
+      chart.draw(data, options);
+    } catch(e){ console.error('drawChart err', e); }
   }
 
-  // engine controls
-  function startEngine(){
-    const strat = document.getElementById('strategy').value;
-    google.script.run.withSuccessHandler(refreshAll).api_startEngine(strat);
-  }
-  function stopEngine(){
-    google.script.run.withSuccessHandler(refreshAll).api_stopEngine();
-  }
-  function manualTick(){
-    google.script.run.withSuccessHandler(function(res){
-      alert('Manual run done. Sent: ' + (res.sent||0));
-      refreshAll();
-    }).api_manualTick();
-  }
-  function changeStrategy(){
-    const s = document.getElementById('strategy').value;
-    google.script.run.withSuccessHandler(loadDiagnostics).api_changeStrategy(s);
-  }
+  // Engine controls
+  function startEngine(){ const strat = document.getElementById('strategy').value; google.script.run.withSuccessHandler(refreshAll).api_startEngine(strat); }
+  function stopEngine(){ google.script.run.withSuccessHandler(refreshAll).api_stopEngine(); }
+  function manualTick(){ google.script.run.withSuccessHandler(function(res){ alert('Manual run done. Sent: ' + (res.sent||0)); refreshAll(); }).api_manualTick(); }
+  function changeStrategy(){ const s = document.getElementById('strategy').value; google.script.run.withSuccessHandler(loadDiagnostics).api_changeStrategy(s); }
 
-  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI', '_blank'); }
-  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard', '_blank'); }
+  function openSheet(){ window.open('https://docs.google.com/spreadsheets/d/1xBD2DvIaYYrl-m5MdqAvwvwdFZQLoiR2tJfGht5buWI','_blank'); }
+  function openRepo(){ window.open('https://github.com/Mymitra8/Mitra-Signal-Dashboard','_blank'); }
 
-  function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function escapeHtml(s){ if (!s) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 </script>
 </body>
 </html>
